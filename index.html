@@ -946,11 +946,19 @@ function onSimplifiedCatChange() {
   const val = document.getElementById('f-simplified-cat').value;
   const hier = getSettings().categoryHierarchy || {};
   if (!val || !hier[val]) { resetCatDownstream(); return; }
-  document.getElementById('f-category').innerHTML =
-    '<option value="">— select —</option>' +
-    Object.keys(hier[val]).map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const cats = Object.keys(hier[val]);
+  const catEl = document.getElementById('f-category');
+  catEl.innerHTML = '<option value="">— select —</option>' +
+    cats.map(c => `<option value="${c}">${c}</option>`).join('');
   document.getElementById('f-subcategory').innerHTML = '<option value="">— select category first —</option>';
   document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
+
+  // Auto-select if only one category exists
+  if (cats.length === 1) {
+    catEl.value = cats[0];
+    onCategoryChange();
+  }
 }
 
 function onCategoryChange() {
@@ -962,10 +970,18 @@ function onCategoryChange() {
     document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
     return;
   }
-  document.getElementById('f-subcategory').innerHTML =
-    '<option value="">— select —</option>' +
-    hier[simplified][cat].map(s => `<option value="${s}">${s}</option>`).join('');
+
+  const subs = hier[simplified][cat];
+  const subEl = document.getElementById('f-subcategory');
+  subEl.innerHTML = '<option value="">— select —</option>' +
+    subs.map(s => `<option value="${s}">${s}</option>`).join('');
   document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
+
+  // Auto-select if only one sub-category exists
+  if (subs.length === 1) {
+    subEl.value = subs[0];
+    onSubCategoryChange();
+  }
 }
 
 function onSubCategoryChange() {
@@ -1002,7 +1018,7 @@ function saveEntry() {
   const sub = document.getElementById('f-subcategory').value;
   const s   = getSettings();
 
-  const entry = enqueue({
+  const entryData = {
     date:          document.getElementById('f-date').value,
     type:          document.getElementById('f-type').value,
     debitCredit:   document.getElementById('f-debit-credit').value,
@@ -1015,20 +1031,23 @@ function saveEntry() {
     simplifiedCat: document.getElementById('f-simplified-cat').value,
     category:      cat,
     subCategory:   sub,
-  });
+  };
 
   if (navigator.onLine && s.apiUrl) {
-    gasRequest(s.apiUrl, buildPayload(entry, s.sheetName))
+    // Try to sync directly — only add to queue if it fails
+    gasRequest(s.apiUrl, buildPayload(entryData, s.sheetName))
       .then(() => {
-        dequeue(entry.id);
         toast('Logged to Google Sheets ✓', 'success');
       })
-      .catch(err => {
-        toast('Sync failed: ' + err.message + ' — saved to Pending', 'error');
+      .catch(() => {
+        enqueue(entryData);
+        toast('Sync failed — saved to Pending', 'error');
       });
   } else if (!s.apiUrl) {
+    enqueue(entryData);
     toast('Saved to Pending (no API URL configured)', 'info');
   } else {
+    enqueue(entryData);
     toast('Offline — saved to Pending', 'info');
   }
 

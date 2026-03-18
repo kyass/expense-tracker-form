@@ -1019,9 +1019,13 @@ function saveEntry() {
 
   if (navigator.onLine && s.apiUrl) {
     gasRequest(s.apiUrl, buildPayload(entry, s.sheetName))
-      .catch(err => toast(err.message, 'error'));
-    dequeue(entry.id);
-    toast('Logged to Google Sheets ✓', 'success');
+      .then(() => {
+        dequeue(entry.id);
+        toast('Logged to Google Sheets ✓', 'success');
+      })
+      .catch(err => {
+        toast('Sync failed: ' + err.message + ' — saved to Pending', 'error');
+      });
   } else if (!s.apiUrl) {
     toast('Saved to Pending (no API URL configured)', 'info');
   } else {
@@ -1107,48 +1111,58 @@ function syncEntry(id) {
   const entry = getQueue().find(e => e.id === id);
   if (!entry) return;
 
+  const card = document.getElementById('card-' + id);
+  if (card) card.style.opacity = '0.45';
+
   gasRequest(s.apiUrl, buildPayload(entry, s.sheetName))
-    .catch(err => toast(err.message, 'error'));
-  dequeue(id);
-  renderPending();
-  toast('Synced to Google Sheets ✓', 'success');
+    .then(() => {
+      dequeue(id);
+      renderPending();
+      toast('Synced to Google Sheets ✓', 'success');
+    })
+    .catch(err => {
+      if (card) card.style.opacity = '1';
+      toast('Sync failed: ' + err.message, 'error');
+    });
 }
 
-function syncAll() {
+async function syncAll() {
   const s = getSettings();
   if (!s.apiUrl) { toast('Set an API URL in Settings first', 'error'); return; }
   if (!navigator.onLine) { toast('No internet connection', 'error'); return; }
   const queue = getQueue();
   if (!queue.length) { toast('Nothing to sync', 'info'); return; }
 
-  let count = 0;
+  const btn = document.getElementById('syncAllBtn');
+  btn.disabled = true;
+  let ok = 0, fail = 0;
+
   for (const entry of [...queue]) {
-    gasRequest(s.apiUrl, buildPayload(entry, s.sheetName))
-      .catch(err => console.error('[ExpenseLog] syncAll:', err));
-    dequeue(entry.id);
-    count++;
+    try {
+      await gasRequest(s.apiUrl, buildPayload(entry, s.sheetName));
+      dequeue(entry.id);
+      ok++;
+    } catch(err) {
+      fail++;
+      console.error('[ExpenseLog] syncAll:', err);
+    }
   }
 
+  btn.disabled = false;
   renderPending();
-  toast(`${count} entries sent to Google Sheets ✓`, 'success');
+  if (!fail) toast(`All ${ok} entries synced ✓`, 'success');
+  else toast(`${ok} synced, ${fail} failed`, 'error');
 }
 
-// ── GAS communication via window.open ────────────────────────
-// Requires Chrome popup exception for file:// (one-time setup).
-// Opens a tab, GAS writes the row, tab closes after 1.5s.
-function gasRequest(apiUrl, payload) {
-  return new Promise((resolve, reject) => {
-    const url = apiUrl + '?data=' + encodeURIComponent(JSON.stringify(payload));
-    const win = window.open(url, '_blank');
-    if (!win) {
-      reject(new Error('Popup blocked — allow popups for file:// in Chrome settings'));
-      return;
-    }
-    setTimeout(() => {
-      try { win.close(); } catch(e) {}
-      resolve();
-    }, 1500);
-  });
+// ── GAS communication via fetch ──────────────────────────────
+// Works perfectly from https:// (GitHub Pages).
+// No popup, no tab flash, clean and instant.
+async function gasRequest(apiUrl, payload) {
+  const url = apiUrl + '?data=' + encodeURIComponent(JSON.stringify(payload));
+  const res = await fetch(url, { redirect: 'follow' });
+  const json = await res.json();
+  if (json.status === 'error') throw new Error(json.message);
+  return json;
 }
 
 // Maps entry fields → columns E through P

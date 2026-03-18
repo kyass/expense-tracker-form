@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ExpenseLog">
+<title>ExpenseLog</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #6ee7b7;
+    --accent2: #818cf8;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    margin: 0; padding: 0;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Header */
+  .app-header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); }
+
+  /* Screens */
+  .screen {
+    display: none;
+    flex: 1;
+    padding: 16px 16px 100px;
+    overflow-y: auto;
+    animation: fadeIn 0.2s ease;
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 0;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.15s;
+    position: relative;
+  }
+  .nav-btn svg { width: 20px; height: 20px; }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn .nb-badge {
+    position: absolute;
+    top: 6px;
+    right: calc(50% - 16px);
+    background: var(--danger);
+    color: white;
+    font-size: 0.55rem;
+    padding: 1px 5px;
+    border-radius: 100px;
+    display: none;
+    min-width: 14px;
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+
+  /* Form elements */
+  .field-group { margin-bottom: 12px; }
+
+  label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+    font-family: var(--font-display);
+  }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(129,140,248,0.12);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  textarea { resize: none; min-height: 72px; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 13px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .btn-primary { background: var(--accent); color: #0f1117; }
+  .btn-primary:active { background: #4ade80; transform: scale(0.98); }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:active { background: var(--surface); transform: scale(0.98); }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 8px 14px;
+    font-size: 0.75rem;
+    width: auto;
+  }
+  .btn-sync {
+    background: var(--accent2);
+    color: white;
+    padding: 8px 14px;
+    font-size: 0.75rem;
+    width: auto;
+  }
+  .btn-sync:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-sync:active { transform: scale(0.97); }
+  .btn-danger:active { transform: scale(0.97); }
+
+  /* Section headers */
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Transaction cards */
+  .tx-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 14px;
+    margin-bottom: 10px;
+    animation: fadeIn 0.2s ease;
+    transition: opacity 0.2s;
+  }
+  .tx-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .tx-desc { font-size: 0.9rem; font-weight: 500; color: var(--text); flex: 1; }
+  .tx-amount {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .tx-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.62rem;
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .tx-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: flex-end;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+  }
+  .empty-state svg { width: 48px; height: 48px; margin: 0 auto 12px; opacity: 0.35; }
+  .empty-state p { font-size: 0.85rem; font-family: var(--font-display); }
+
+  /* Toast */
+  #toast-container {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    width: calc(100% - 32px);
+    max-width: 420px;
+  }
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    font-family: var(--font-display);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    animation: slideUp 0.25s ease;
+    pointer-events: all;
+  }
+  .toast.success .toast-icon { color: var(--accent); }
+  .toast.error .toast-icon { color: var(--danger); }
+  .toast.info .toast-icon { color: var(--accent2); }
+  .toast-icon { font-size: 1rem; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideDown {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(8px); }
+  }
+  .toast.hiding { animation: slideDown 0.2s ease forwards; }
+
+  /* Settings */
+  .settings-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .settings-group label { color: var(--text); font-size: 0.7rem; }
+
+  /* Sync bar */
+  .sync-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 10px;
+  }
+  .sync-bar-info {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .sync-bar-count {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 1rem;
+    display: block;
+  }
+
+  /* Misc */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+  .status-dot.online {
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+
+  .cat-subcat-preview {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    color: var(--accent2);
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    font-style: italic;
+  }
+
+  code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 0.75em;
+    color: var(--accent2);
+  }
+
+  /* Exchange rate rows in settings */
+  .fx-row {
+    display: grid;
+    grid-template-columns: 1fr 110px 36px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .fx-row input { font-size: 0.82rem; padding: 9px 10px; }
+  .btn-remove-fx {
+    width: 36px; height: 38px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--danger);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .btn-remove-fx:active { background: rgba(248,113,113,0.1); }
+
+  /* FX indicator pill on form */
+  .fx-indicator-bar {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: -4px;
+    margin-bottom: 10px;
+    padding: 7px 11px;
+    background: rgba(251,191,36,0.07);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 7px;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--warn);
+    letter-spacing: 0.03em;
+  }
+  .fx-indicator-bar.visible { display: flex; }
+
+  input[readonly] {
+    opacity: 0.65;
+    cursor: default;
+    border-style: dashed;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo">Expense<span>Log</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="status-dot" id="statusDot"></span>
+      <span style="font-size:0.65rem;font-family:var(--font-display);color:var(--muted)" id="statusLabel">offline</span>
+    </div>
+  </header>
+
+  <!-- ══ SCREEN: Form ══════════════════════════════════════ -->
+  <div class="screen active" id="screen-form">
+    <div class="section-title">New Entry</div>
+
+    <div class="field-group row-2">
+      <div>
+        <label>Date</label>
+        <input type="date" id="f-date">
+      </div>
+      <div>
+        <label>Type</label>
+        <select id="f-type"></select>
+      </div>
+    </div>
+
+    <div class="field-group row-2">
+      <div>
+        <label>Debit / Credit</label>
+        <select id="f-debit-credit">
+          <option value="debit">Debit</option>
+          <option value="credit">Credit</option>
+        </select>
+      </div>
+      <div>
+        <label>Account</label>
+        <select id="f-account" onchange="onAccountChange()"></select>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Description</label>
+      <input type="text" id="f-description" placeholder="What was this for?">
+    </div>
+
+    <div class="field-group row-2">
+      <div>
+        <label id="lbl-amount-cad">Amount (CAD)</label>
+        <input type="number" id="f-amount-cad" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div>
+        <label>Amount (Local)</label>
+        <input type="number" id="f-amount-local" placeholder="0.00" step="0.01" min="0" oninput="onAmountLocalChange()">
+      </div>
+    </div>
+
+    <div class="fx-indicator-bar" id="fx-indicator">
+      <span>⇄</span>
+      <span id="fx-rate-label"></span>
+      <span style="color:var(--muted);font-weight:400">· CAD calculated automatically from Local amount</span>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title" style="font-size:0.85rem;margin-bottom:12px">Category</div>
+
+    <div class="field-group">
+      <label>Simplified Category</label>
+      <select id="f-simplified-cat" onchange="onSimplifiedCatChange()">
+        <option value="">— select —</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>Category</label>
+      <select id="f-category" onchange="onCategoryChange()">
+        <option value="">— select simplified first —</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>Sub-Category</label>
+      <select id="f-subcategory" onchange="onSubCategoryChange()">
+        <option value="">— select category first —</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>Cat - Subcat (auto-generated)</label>
+      <div class="cat-subcat-preview" id="cat-subcat-preview">Will populate automatically</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field-group">
+      <label>Notes</label>
+      <textarea id="f-notes" placeholder="Optional notes…"></textarea>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveEntry()" style="margin-top:6px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.146-.354l-3-3A.5.5 0 0 0 11.5 1H2zm3 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1zm5 8H6v-3h4z"/>
+      </svg>
+      Log Entry
+    </button>
+  </div>
+
+  <!-- ══ SCREEN: Pending ═══════════════════════════════════ -->
+  <div class="screen" id="screen-pending">
+    <div class="section-title">Pending Sync</div>
+
+    <div class="sync-bar">
+      <div class="sync-bar-info">
+        <span class="sync-bar-count" id="pendingCount">0</span>
+        entries waiting to sync
+      </div>
+      <button class="btn btn-sync" style="width:auto;min-width:96px" onclick="syncAll()" id="syncAllBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+        </svg>
+        Sync All
+      </button>
+    </div>
+
+    <div id="pendingList"></div>
+  </div>
+
+  <!-- ══ SCREEN: Settings ══════════════════════════════════ -->
+  <div class="screen" id="screen-settings">
+    <div class="section-title">Settings</div>
+
+    <div class="settings-group">
+      <div class="field-group">
+        <label>Google Apps Script API URL</label>
+        <input type="url" id="s-api-url" placeholder="https://script.google.com/macros/s/…/exec">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="testConnection()"
+            style="padding:7px 14px;font-size:0.75rem;width:auto">
+            Test Connection
+          </button>
+          <button class="btn btn-secondary" onclick="openUrlInTab()"
+            style="padding:7px 14px;font-size:0.75rem;width:auto">
+            Open URL in Tab ↗
+          </button>
+          <button class="btn btn-secondary" onclick="sendTestRow()"
+            style="padding:7px 14px;font-size:0.75rem;width:auto;color:var(--warn);border-color:var(--warn)">
+            Send Test Row ↗
+          </button>
+          <span id="conn-status" style="font-size:0.72rem;font-family:var(--font-display);color:var(--muted);width:100%"></span>
+        </div>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <label>Sheet Tab Name</label>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <input type="text" id="s-sheet-name" placeholder="e.g. Expenses">
+          <button class="btn btn-secondary" onclick="verifySheet()"
+            style="padding:11px 14px;font-size:0.75rem;width:auto;white-space:nowrap;flex-shrink:0">
+            Verify
+          </button>
+        </div>
+        <span id="sheet-status" style="font-size:0.72rem;font-family:var(--font-display);color:var(--muted);display:block;margin-top:6px"></span>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="section-title" style="font-size:0.85rem;margin-bottom:12px">Default Values</div>
+      <div class="field-group row-2">
+        <div>
+          <label>Default Type</label>
+          <input type="text" id="s-default-type" placeholder="Expenses">
+        </div>
+        <div>
+          <label>Default Account</label>
+          <input type="text" id="s-default-account" placeholder="WS CC">
+        </div>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <label>Default Debit / Credit</label>
+        <select id="s-default-dc">
+          <option value="debit">Debit</option>
+          <option value="credit">Credit</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="section-title" style="font-size:0.85rem;margin-bottom:12px">Lists</div>
+      <div class="field-group">
+        <label>Types (one per line)</label>
+        <textarea id="s-types" rows="4" placeholder="Expenses&#10;Income&#10;Transfer"></textarea>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <label>Accounts (one per line)</label>
+        <textarea id="s-accounts" rows="4" placeholder="WS CC&#10;Chequing&#10;Savings"></textarea>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="section-title" style="font-size:0.85rem;margin-bottom:6px">Category Hierarchy</div>
+      <p style="font-size:0.72rem;color:var(--muted);margin:0 0 10px;font-family:var(--font-display);line-height:1.5">
+        JSON format: <code>{"SimplifiedCat": {"Category": ["Sub1","Sub2"]}}</code>
+      </p>
+      <div class="field-group" style="margin-bottom:0">
+        <label>Category JSON</label>
+        <textarea id="s-category-json" rows="10"></textarea>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="section-title" style="font-size:0.85rem;margin-bottom:4px">Exchange Rates</div>
+      <p style="font-size:0.72rem;color:var(--muted);margin:0 0 12px;font-family:var(--font-display);line-height:1.5">
+        Assign a rate to any foreign-currency account. Enter how much local currency equals 1 CAD. The CAD amount will be calculated as <code>Local ÷ Rate</code>.
+      </p>
+
+      <div style="display:grid;grid-template-columns:1fr 110px 36px;gap:8px;margin-bottom:6px">
+        <span style="font-size:0.62rem;font-family:var(--font-display);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Account</span>
+        <span style="font-size:0.62rem;font-family:var(--font-display);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Rate → CAD</span>
+        <span></span>
+      </div>
+
+      <div id="fx-rows"></div>
+
+      <button class="btn btn-secondary" onclick="addFxRow()" style="margin-top:4px;padding:9px 14px;font-size:0.78rem;border-style:dashed">
+        + Add Account Rate
+      </button>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveSettings()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+      </svg>
+      Save Settings
+    </button>
+    <div style="height:8px"></div>
+    <button class="btn btn-secondary" onclick="clearAllData()" style="color:var(--danger);border-color:var(--danger)">
+      Clear All Local Data
+    </button>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-form" onclick="showScreen('form')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+      New
+    </button>
+    <button class="nav-btn" id="nav-pending" onclick="showScreen('pending')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10"/>
+      </svg>
+      Pending
+      <span class="nb-badge" id="navBadge"></span>
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="showScreen('settings')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      Settings
+    </button>
+  </nav>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONSTANTS & DEFAULTS
+// ══════════════════════════════════════════════════════════════
+const KEYS = { SETTINGS: 'explog_settings', QUEUE: 'explog_queue' };
+
+const DEFAULT_SETTINGS = {
+  apiUrl: '',
+  sheetName: 'Expenses',
+  defaultType: 'Expenses',
+  defaultAccount: 'WS CC',
+  defaultDC: 'debit',
+  types: ['Expenses', 'Income', 'Transfer', 'Savings'],
+  accounts: ['WS CC', 'Chequing', 'Savings', 'Cash'],
+  exchangeRates: {},   // { "AccountName": 0.73, ... }
+  categoryHierarchy: {
+    "Food & Drink": {
+      "Dining Out": ["Restaurant", "Takeout", "Fast Food", "Cafe"],
+      "Groceries": ["Supermarket", "Farmers Market", "Specialty Store"],
+      "Alcohol": ["Bar", "LCBO", "Beer Store"]
+    },
+    "Transport": {
+      "Fuel": ["Gas Station", "Highway Toll"],
+      "Transit": ["Bus", "Train", "Subway", "Taxi", "Rideshare"],
+      "Maintenance": ["Repair", "Parts", "Car Insurance"]
+    },
+    "Housing": {
+      "Rent/Mortgage": ["Rent", "Mortgage Payment"],
+      "Utilities": ["Hydro", "Water", "Natural Gas", "Internet", "Phone"],
+      "Maintenance": ["Repairs", "Cleaning Supplies", "Tools"]
+    },
+    "Health": {
+      "Medical": ["Doctor", "Dentist", "Pharmacy", "Vision"],
+      "Fitness": ["Gym Membership", "Equipment", "Classes", "Sports"]
+    },
+    "Entertainment": {
+      "Subscriptions": ["Streaming", "Music", "Gaming", "News / Books"],
+      "Activities": ["Movies", "Events", "Travel", "Hobbies"]
+    },
+    "Shopping": {
+      "Clothing": ["Apparel", "Shoes", "Accessories"],
+      "Electronics": ["Devices", "Accessories", "Software"],
+      "Household": ["Furniture", "Decor", "Appliances", "Supplies"]
+    },
+    "Income": {
+      "Employment": ["Salary", "Bonus", "Commission", "Side Hustle"],
+      "Other": ["Freelance", "Investment Return", "Gift", "Refund / Rebate"]
+    },
+    "Savings": {
+      "Transfers": ["TFSA", "RRSP", "Emergency Fund", "Investment Account"]
+    }
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// STORAGE HELPERS
+// ══════════════════════════════════════════════════════════════
+function getSettings() {
+  try {
+    const s = localStorage.getItem(KEYS.SETTINGS);
+    return s ? { ...DEFAULT_SETTINGS, ...JSON.parse(s) } : { ...DEFAULT_SETTINGS };
+  } catch { return { ...DEFAULT_SETTINGS }; }
+}
+function persistSettings(data) {
+  localStorage.setItem(KEYS.SETTINGS, JSON.stringify(data));
+}
+function getQueue() {
+  try {
+    const q = localStorage.getItem(KEYS.QUEUE);
+    return q ? JSON.parse(q) : [];
+  } catch { return []; }
+}
+function persistQueue(q) {
+  localStorage.setItem(KEYS.QUEUE, JSON.stringify(q));
+}
+function enqueue(entry) {
+  entry.id = Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  entry.savedAt = new Date().toISOString();
+  const q = getQueue();
+  q.push(entry);
+  persistQueue(q);
+  updateBadge();
+  return entry;
+}
+function dequeue(id) {
+  persistQueue(getQueue().filter(e => e.id !== id));
+  updateBadge();
+}
+
+// ══════════════════════════════════════════════════════════════
+// NAV & SCREENS
+// ══════════════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'pending') renderPending();
+  if (name === 'settings') loadSettingsUI();
+}
+
+function updateBadge() {
+  const count = getQueue().length;
+  const badge = document.getElementById('navBadge');
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════
+function toast(msg, type = 'success') {
+  const icons = { success: '✓', error: '✕', info: '→' };
+  const el = Object.assign(document.createElement('div'), {
+    className: `toast ${type}`,
+    innerHTML: `<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`
+  });
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => { el.classList.add('hiding'); setTimeout(() => el.remove(), 250); }, 3200);
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONNECTIVITY
+// ══════════════════════════════════════════════════════════════
+function updateStatus() {
+  const online = navigator.onLine;
+  document.getElementById('statusDot').className = 'status-dot' + (online ? ' online' : '');
+  document.getElementById('statusLabel').textContent = online ? 'online' : 'offline';
+}
+window.addEventListener('online', () => { updateStatus(); toast('Back online', 'info'); });
+window.addEventListener('offline', () => { updateStatus(); toast('Gone offline — entries will save locally', 'info'); });
+updateStatus();
+
+// ══════════════════════════════════════════════════════════════
+// FORM INITIALISATION
+// ══════════════════════════════════════════════════════════════
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function populateSelect(id, options, selected) {
+  document.getElementById(id).innerHTML =
+    options.map(o => `<option value="${o}"${o === selected ? ' selected' : ''}>${o}</option>`).join('');
+}
+
+function initForm() {
+  const s = getSettings();
+  document.getElementById('f-date').value = todayStr();
+  populateSelect('f-type', s.types, s.defaultType);
+  populateSelect('f-account', s.accounts, s.defaultAccount);
+  document.getElementById('f-debit-credit').value = s.defaultDC;
+  buildSimplifiedCatDropdown();
+  onAccountChange(); // apply FX state for default account
+}
+
+// ── FX: react to account change ─────────────────────────────
+function onAccountChange() {
+  const account = document.getElementById('f-account').value;
+  const rate = getExchangeRate(account);
+  const cadInput  = document.getElementById('f-amount-cad');
+  const indicator = document.getElementById('fx-indicator');
+  const rateLabel = document.getElementById('fx-rate-label');
+  const cadLabel  = document.getElementById('lbl-amount-cad');
+
+  if (rate !== null) {
+    // Foreign currency account
+    cadInput.readOnly = true;
+    cadInput.placeholder = 'Auto-calculated';
+    cadLabel.textContent = 'Amount (CAD) — auto';
+    indicator.classList.add('visible');
+    rateLabel.textContent = `1 CAD = ${rate} local`;
+    // Recalculate in case local already has a value
+    onAmountLocalChange();
+  } else {
+    // Domestic account
+    cadInput.readOnly = false;
+    cadInput.placeholder = '0.00';
+    cadLabel.textContent = 'Amount (CAD)';
+    indicator.classList.remove('visible');
+    // Don't wipe CAD if user already typed something
+  }
+}
+
+function getExchangeRate(account) {
+  const rates = getSettings().exchangeRates || {};
+  const val = rates[account];
+  return (val !== undefined && val !== '' && !isNaN(parseFloat(val)))
+    ? parseFloat(val)
+    : null;
+}
+
+function onAmountLocalChange() {
+  const account = document.getElementById('f-account').value;
+  const rate = getExchangeRate(account);
+  if (rate === null) return;
+  const local = parseFloat(document.getElementById('f-amount-local').value);
+  const cadInput = document.getElementById('f-amount-cad');
+  if (!isNaN(local) && local > 0) {
+    cadInput.value = (local / rate).toFixed(2);
+  } else {
+    cadInput.value = '';
+  }
+}
+
+function buildSimplifiedCatDropdown() {
+  const hier = getSettings().categoryHierarchy || {};
+  const el = document.getElementById('f-simplified-cat');
+  el.innerHTML = '<option value="">— select —</option>' +
+    Object.keys(hier).map(k => `<option value="${k}">${k}</option>`).join('');
+  resetCatDownstream();
+}
+
+function resetCatDownstream() {
+  document.getElementById('f-category').innerHTML = '<option value="">— select simplified first —</option>';
+  document.getElementById('f-subcategory').innerHTML = '<option value="">— select category first —</option>';
+  document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
+}
+
+function onSimplifiedCatChange() {
+  const val = document.getElementById('f-simplified-cat').value;
+  const hier = getSettings().categoryHierarchy || {};
+  if (!val || !hier[val]) { resetCatDownstream(); return; }
+  document.getElementById('f-category').innerHTML =
+    '<option value="">— select —</option>' +
+    Object.keys(hier[val]).map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('f-subcategory').innerHTML = '<option value="">— select category first —</option>';
+  document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
+}
+
+function onCategoryChange() {
+  const simplified = document.getElementById('f-simplified-cat').value;
+  const cat = document.getElementById('f-category').value;
+  const hier = getSettings().categoryHierarchy || {};
+  if (!simplified || !cat || !hier[simplified]?.[cat]) {
+    document.getElementById('f-subcategory').innerHTML = '<option value="">— select category first —</option>';
+    document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
+    return;
+  }
+  document.getElementById('f-subcategory').innerHTML =
+    '<option value="">— select —</option>' +
+    hier[simplified][cat].map(s => `<option value="${s}">${s}</option>`).join('');
+  document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
+}
+
+function onSubCategoryChange() {
+  const cat = document.getElementById('f-category').value;
+  const sub = document.getElementById('f-subcategory').value;
+  document.getElementById('cat-subcat-preview').textContent =
+    (cat && sub) ? `${cat} (${sub})` : 'Will populate automatically';
+  if (sub) document.getElementById('f-description').value = sub;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SAVE ENTRY
+// ══════════════════════════════════════════════════════════════
+function saveEntry() {
+  const desc    = document.getElementById('f-description').value.trim();
+  const account = document.getElementById('f-account').value;
+  const rate     = getExchangeRate(account);
+  const amtLocal = document.getElementById('f-amount-local').value;
+  const amtCAD   = document.getElementById('f-amount-cad').value;
+
+  if (!desc) { toast('Please enter a description', 'error'); return; }
+
+  if (rate !== null) {
+    if (!amtLocal || parseFloat(amtLocal) <= 0) {
+      toast('Please enter the local amount', 'error'); return;
+    }
+  } else {
+    if (!amtCAD || parseFloat(amtCAD) <= 0) {
+      toast('Please enter an amount (CAD)', 'error'); return;
+    }
+  }
+
+  const cat = document.getElementById('f-category').value;
+  const sub = document.getElementById('f-subcategory').value;
+  const s   = getSettings();
+
+  const entry = enqueue({
+    date:          document.getElementById('f-date').value,
+    type:          document.getElementById('f-type').value,
+    debitCredit:   document.getElementById('f-debit-credit').value,
+    account,
+    description:   desc,
+    amountCAD:     parseFloat(amtCAD) || 0,
+    amountLocal:   parseFloat(amtLocal) || 0,
+    catSubcat:     cat && sub ? `${cat} (${sub})` : cat,
+    notes:         document.getElementById('f-notes').value.trim(),
+    simplifiedCat: document.getElementById('f-simplified-cat').value,
+    category:      cat,
+    subCategory:   sub,
+  });
+
+  if (navigator.onLine && s.apiUrl) {
+    gasRequest(s.apiUrl, buildPayload(entry, s.sheetName))
+      .catch(err => toast(err.message, 'error'));
+    dequeue(entry.id);
+    toast('Logged to Google Sheets ✓', 'success');
+  } else if (!s.apiUrl) {
+    toast('Saved to Pending (no API URL configured)', 'info');
+  } else {
+    toast('Offline — saved to Pending', 'info');
+  }
+
+  resetForm();
+}
+
+function resetForm() {
+  const s = getSettings();
+  document.getElementById('f-date').value = todayStr();
+  document.getElementById('f-type').value = s.defaultType || s.types[0] || '';
+  document.getElementById('f-debit-credit').value = s.defaultDC || 'debit';
+  document.getElementById('f-account').value = s.defaultAccount || s.accounts[0] || '';
+  document.getElementById('f-description').value = '';
+  document.getElementById('f-amount-cad').value = '';
+  document.getElementById('f-amount-local').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('f-simplified-cat').value = '';
+  resetCatDownstream();
+  onAccountChange(); // restore FX state for reset account
+}
+
+// ══════════════════════════════════════════════════════════════
+// PENDING SCREEN
+// ══════════════════════════════════════════════════════════════
+function renderPending() {
+  const queue = getQueue();
+  document.getElementById('pendingCount').textContent = queue.length;
+
+  if (!queue.length) {
+    document.getElementById('pendingList').innerHTML = `
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p>All caught up!<br>No entries pending sync.</p>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('pendingList').innerHTML = queue.map(e => `
+    <div class="tx-card" id="card-${e.id}">
+      <div class="tx-card-header">
+        <div class="tx-desc">${esc(e.description)}</div>
+        <div class="tx-amount">CA$${e.amountCAD.toFixed(2)}</div>
+      </div>
+      <div class="tx-meta">
+        <span class="chip">${e.date}</span>
+        <span class="chip">${esc(e.account)}</span>
+        <span class="chip">${esc(e.type)}</span>
+        <span class="chip">${e.debitCredit}</span>
+        ${e.catSubcat ? `<span class="chip">${esc(e.catSubcat)}</span>` : ''}
+      </div>
+      ${e.notes ? `<div style="margin-top:7px;font-size:0.73rem;color:var(--muted);font-style:italic">${esc(e.notes)}</div>` : ''}
+      ${e.amountLocal ? `<div style="margin-top:4px;font-size:0.72rem;color:var(--muted)">Local: ${e.amountLocal.toFixed(2)}</div>` : ''}
+      <div class="tx-actions">
+        <button class="btn btn-danger" onclick="deleteEntry('${e.id}')">Delete</button>
+        <button class="btn btn-sync" onclick="syncEntry('${e.id}')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+          </svg>
+          Sync
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteEntry(id) {
+  dequeue(id);
+  renderPending();
+  toast('Entry deleted', 'info');
+}
+
+function syncEntry(id) {
+  const s = getSettings();
+  if (!s.apiUrl) { toast('Set an API URL in Settings first', 'error'); return; }
+  if (!navigator.onLine) { toast('No internet connection', 'error'); return; }
+
+  const entry = getQueue().find(e => e.id === id);
+  if (!entry) return;
+
+  gasRequest(s.apiUrl, buildPayload(entry, s.sheetName))
+    .catch(err => toast(err.message, 'error'));
+  dequeue(id);
+  renderPending();
+  toast('Synced to Google Sheets ✓', 'success');
+}
+
+function syncAll() {
+  const s = getSettings();
+  if (!s.apiUrl) { toast('Set an API URL in Settings first', 'error'); return; }
+  if (!navigator.onLine) { toast('No internet connection', 'error'); return; }
+  const queue = getQueue();
+  if (!queue.length) { toast('Nothing to sync', 'info'); return; }
+
+  let count = 0;
+  for (const entry of [...queue]) {
+    gasRequest(s.apiUrl, buildPayload(entry, s.sheetName))
+      .catch(err => console.error('[ExpenseLog] syncAll:', err));
+    dequeue(entry.id);
+    count++;
+  }
+
+  renderPending();
+  toast(`${count} entries sent to Google Sheets ✓`, 'success');
+}
+
+// ── GAS communication via window.open ────────────────────────
+// Requires Chrome popup exception for file:// (one-time setup).
+// Opens a tab, GAS writes the row, tab closes after 1.5s.
+function gasRequest(apiUrl, payload) {
+  return new Promise((resolve, reject) => {
+    const url = apiUrl + '?data=' + encodeURIComponent(JSON.stringify(payload));
+    const win = window.open(url, '_blank');
+    if (!win) {
+      reject(new Error('Popup blocked — allow popups for file:// in Chrome settings'));
+      return;
+    }
+    setTimeout(() => {
+      try { win.close(); } catch(e) {}
+      resolve();
+    }, 1500);
+  });
+}
+
+// Maps entry fields → columns E through P
+function buildPayload(entry, sheetName) {
+  return {
+    sheetName,
+    row: [
+      entry.date,           // E
+      entry.type,           // F
+      entry.debitCredit,    // G
+      entry.account,        // H
+      entry.description,    // I
+      entry.amountCAD,      // J
+      entry.amountLocal,    // K
+      entry.catSubcat,      // L
+      entry.notes,          // M
+      entry.simplifiedCat,  // N
+      entry.category,       // O
+      entry.subCategory,    // P
+    ]
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONNECTION TEST
+// ══════════════════════════════════════════════════════════════
+async function testConnection() {
+  const url = document.getElementById('s-api-url').value.trim();
+  const statusEl = document.getElementById('conn-status');
+
+  if (!url) { statusEl.textContent = '✕ No URL entered'; statusEl.style.color = 'var(--danger)'; return; }
+  if (!url.startsWith('https://script.google.com')) {
+    statusEl.textContent = '✕ Doesn\'t look like an Apps Script URL';
+    statusEl.style.color = 'var(--danger)'; return;
+  }
+
+  statusEl.textContent = 'Testing…'; statusEl.style.color = 'var(--muted)';
+
+  try {
+    const res = await gasRequest(url, { test: true });
+    statusEl.textContent = '✓ Connected — ' + (res.message || 'OK');
+    statusEl.style.color = 'var(--accent)';
+  } catch(err) {
+    statusEl.textContent = '✕ ' + err.message;
+    statusEl.style.color = 'var(--danger)';
+  }
+}
+
+function openUrlInTab() {
+  const url = document.getElementById('s-api-url').value.trim();
+  if (!url) { alert('Enter a URL first'); return; }
+  window.open(url, '_blank');
+}
+
+function sendTestRow() {
+  const apiUrl = document.getElementById('s-api-url').value.trim();
+  const sheetName = document.getElementById('s-sheet-name').value.trim() || 'Expenses';
+  if (!apiUrl) { alert('Enter an API URL first'); return; }
+
+  const testPayload = {
+    sheetName,
+    row: [
+      new Date().toISOString().split('T')[0],
+      'Expenses', 'debit', 'Test Account',
+      'TEST ENTRY — safe to delete',
+      0.01, 0, '', 'Sent from ExpenseLog connection test',
+      '', '', '',
+    ]
+  };
+
+  // Use window.open for the test so we can read the response
+  const url = apiUrl + '?data=' + encodeURIComponent(JSON.stringify(testPayload));
+  window.open(url, '_blank');
+}
+
+// Verify sheet name by reading the actual GAS response.
+// Uses a hidden iframe + message passing since fetch is blocked from file://
+async function verifySheet() {
+  const apiUrl = document.getElementById('s-api-url').value.trim();
+  const sheetName = document.getElementById('s-sheet-name').value.trim();
+  const statusEl = document.getElementById('sheet-status');
+
+  if (!apiUrl) { statusEl.textContent = '✕ Enter API URL first'; statusEl.style.color = 'var(--danger)'; return; }
+  if (!sheetName) { statusEl.textContent = '✕ Enter a sheet name first'; statusEl.style.color = 'var(--danger)'; return; }
+
+  statusEl.textContent = 'Verifying…'; statusEl.style.color = 'var(--muted)';
+
+  // Build a verify URL — GAS returns JSON we can read if we open it in a new tab
+  // Since we can't read fetch responses from file://, open in tab and ask user to check
+  const verifyUrl = apiUrl + '?data=' + encodeURIComponent(JSON.stringify({ sheetName, verifyOnly: true }));
+  window.open(verifyUrl, '_blank');
+  statusEl.textContent = '→ Check the tab that just opened — it will show ✓ ok or list the available sheet names if yours wasn\'t found';
+  statusEl.style.color = 'var(--accent2)';
+}
+
+// ══════════════════════════════════════════════════════════════
+// SETTINGS SCREEN
+// ══════════════════════════════════════════════════════════════
+function loadSettingsUI() {
+  const s = getSettings();
+  document.getElementById('s-api-url').value = s.apiUrl || '';
+  document.getElementById('s-sheet-name').value = s.sheetName || '';
+  document.getElementById('s-default-type').value = s.defaultType || '';
+  document.getElementById('s-default-account').value = s.defaultAccount || '';
+  document.getElementById('s-default-dc').value = s.defaultDC || 'debit';
+  document.getElementById('s-types').value = (s.types || []).join('\n');
+  document.getElementById('s-accounts').value = (s.accounts || []).join('\n');
+  document.getElementById('s-category-json').value =
+    JSON.stringify(s.categoryHierarchy || {}, null, 2);
+
+  // Render FX rate rows
+  const rates = s.exchangeRates || {};
+  document.getElementById('fx-rows').innerHTML = '';
+  if (Object.keys(rates).length) {
+    Object.entries(rates).forEach(([acct, rate]) => addFxRow(acct, rate));
+  }
+}
+
+function saveSettings() {
+  let hierarchy = {};
+  const raw = document.getElementById('s-category-json').value.trim();
+  if (raw) {
+    try { hierarchy = JSON.parse(raw); }
+    catch { toast('Invalid Category JSON — check syntax', 'error'); return; }
+  }
+  const parse = (id) =>
+    document.getElementById(id).value.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Collect FX rates from dynamic rows
+  const exchangeRates = {};
+  document.querySelectorAll('.fx-row').forEach(row => {
+    const acct = row.querySelector('.fx-acct').value.trim();
+    const rate = parseFloat(row.querySelector('.fx-rate').value);
+    if (acct && !isNaN(rate) && rate > 0) exchangeRates[acct] = rate;
+  });
+
+  const data = {
+    apiUrl:            document.getElementById('s-api-url').value.trim(),
+    sheetName:         document.getElementById('s-sheet-name').value.trim() || 'Expenses',
+    defaultType:       document.getElementById('s-default-type').value.trim(),
+    defaultAccount:    document.getElementById('s-default-account').value.trim(),
+    defaultDC:         document.getElementById('s-default-dc').value,
+    types:             parse('s-types').length   ? parse('s-types')   : DEFAULT_SETTINGS.types,
+    accounts:          parse('s-accounts').length ? parse('s-accounts'): DEFAULT_SETTINGS.accounts,
+    categoryHierarchy: Object.keys(hierarchy).length ? hierarchy : DEFAULT_SETTINGS.categoryHierarchy,
+    exchangeRates,
+  };
+
+  persistSettings(data);
+  initForm();
+  toast('Settings saved ✓', 'success');
+}
+
+// ── FX row helpers ───────────────────────────────────────────
+function addFxRow(account = '', rate = '') {
+  const container = document.getElementById('fx-rows');
+  const row = document.createElement('div');
+  row.className = 'fx-row';
+  row.innerHTML = `
+    <input class="fx-acct" type="text" placeholder="Account name" value="${esc(String(account))}"
+      style="font-size:0.82rem;padding:9px 10px">
+    <input class="fx-rate" type="number" placeholder="e.g. 0.73" step="0.0001" min="0"
+      value="${rate !== '' ? rate : ''}"
+      style="font-size:0.82rem;padding:9px 10px;text-align:right">
+    <button class="btn-remove-fx" onclick="this.closest('.fx-row').remove()" title="Remove">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+function clearAllData() {
+  if (!confirm('Delete ALL local entries and settings?')) return;
+  localStorage.removeItem(KEYS.QUEUE);
+  localStorage.removeItem(KEYS.SETTINGS);
+  updateBadge();
+  initForm();
+  toast('All local data cleared', 'info');
+}
+
+// ══════════════════════════════════════════════════════════════
+// UTIL
+// ══════════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════════════════════
+// PWA SERVICE WORKER (blob registration for single-file use)
+// ══════════════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  const sw = `
+    const V = 'explog-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(V).then(c => c.addAll([self.location.href])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(self.location.href)))
+      );
+    });
+  `;
+  const blob = new Blob([sw], { type: 'text/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+
+// ══════════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════════
+initForm();
+updateBadge();
+</script>
+</body>
+</html>

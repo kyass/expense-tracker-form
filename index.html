@@ -74,7 +74,7 @@
   .screen {
     display: none;
     flex: 1;
-    padding: 16px 16px 100px;
+    padding: 10px 12px 100px;
     overflow-y: auto;
     animation: fadeIn 0.2s ease;
   }
@@ -138,7 +138,7 @@
   }
 
   /* Form elements */
-  .field-group { margin-bottom: 12px; }
+  .field-group { margin-bottom: 8px; }
 
   label {
     display: block;
@@ -147,7 +147,7 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 5px;
+    margin-bottom: 3px;
     font-family: var(--font-display);
   }
 
@@ -158,8 +158,8 @@
     border-radius: 8px;
     color: var(--text);
     font-family: var(--font-mono);
-    font-size: 0.9rem;
-    padding: 11px 14px;
+    font-size: 0.88rem;
+    padding: 8px 12px;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
     -webkit-appearance: none;
@@ -222,13 +222,12 @@
   .btn-sync:active { transform: scale(0.97); }
   .btn-danger:active { transform: scale(0.97); }
 
-  /* Section headers */
   .section-title {
     font-family: var(--font-display);
     font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: -0.02em;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     color: var(--text);
     display: flex;
     align-items: center;
@@ -373,7 +372,7 @@
   }
 
   /* Misc */
-  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
 
   .status-dot {
     width: 7px; height: 7px;
@@ -457,6 +456,35 @@
     border-style: dashed;
     color: var(--accent);
   }
+
+  /* Collapsible notes */
+  .notes-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 2px 0;
+    margin-bottom: 6px;
+  }
+  .notes-toggle .toggle-icon {
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+    display: inline-block;
+  }
+  .notes-toggle.open .toggle-icon { transform: rotate(45deg); }
+  .notes-panel {
+    display: none;
+    margin-bottom: 8px;
+  }
+  .notes-panel.open { display: block; }
 </style>
 </head>
 <body>
@@ -523,20 +551,20 @@
     </div>
 
     <div class="divider"></div>
-    <div class="section-title" style="font-size:0.85rem;margin-bottom:12px">Category</div>
 
-    <div class="field-group">
-      <label>Simplified Category</label>
-      <select id="f-simplified-cat" onchange="onSimplifiedCatChange()">
-        <option value="">— select —</option>
-      </select>
-    </div>
-
-    <div class="field-group">
-      <label>Category</label>
-      <select id="f-category" onchange="onCategoryChange()">
-        <option value="">— select simplified first —</option>
-      </select>
+    <div class="row-2">
+      <div class="field-group">
+        <label>Simplified Cat</label>
+        <select id="f-simplified-cat" onchange="onSimplifiedCatChange()">
+          <option value="">— select —</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Category</label>
+        <select id="f-category" onchange="onCategoryChange()">
+          <option value="">—</option>
+        </select>
+      </div>
     </div>
 
     <div class="field-group">
@@ -547,15 +575,16 @@
     </div>
 
     <div class="field-group">
-      <label>Cat - Subcat (auto-generated)</label>
       <div class="cat-subcat-preview" id="cat-subcat-preview">Will populate automatically</div>
     </div>
 
     <div class="divider"></div>
 
-    <div class="field-group">
-      <label>Notes</label>
-      <textarea id="f-notes" placeholder="Optional notes…"></textarea>
+    <button class="notes-toggle" id="notes-toggle" onclick="toggleNotes()">
+      <span class="toggle-icon">+</span> Add note
+    </button>
+    <div class="notes-panel" id="notes-panel">
+      <textarea id="f-notes" placeholder="Optional notes…" style="min-height:56px"></textarea>
     </div>
 
     <button class="btn btn-primary" onclick="saveEntry()" style="margin-top:6px">
@@ -859,6 +888,15 @@ window.addEventListener('online', () => { updateStatus(); toast('Back online', '
 window.addEventListener('offline', () => { updateStatus(); toast('Gone offline — entries will save locally', 'info'); });
 updateStatus();
 
+function toggleNotes() {
+  const panel  = document.getElementById('notes-panel');
+  const toggle = document.getElementById('notes-toggle');
+  const open   = panel.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+  toggle.querySelector('.toggle-icon').textContent = open ? '+' : '+';
+  if (open) document.getElementById('f-notes').focus();
+}
+
 // ══════════════════════════════════════════════════════════════
 // FORM INITIALISATION
 // ══════════════════════════════════════════════════════════════
@@ -1064,6 +1102,8 @@ function resetForm() {
   document.getElementById('f-amount-cad').value = '';
   document.getElementById('f-amount-local').value = '';
   document.getElementById('f-notes').value = '';
+  document.getElementById('notes-panel').classList.remove('open');
+  document.getElementById('notes-toggle').classList.remove('open');
   document.getElementById('f-simplified-cat').value = '';
   resetCatDownstream();
   onAccountChange(); // restore FX state for reset account

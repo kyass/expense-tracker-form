@@ -988,7 +988,7 @@ function onSubCategoryChange() {
   const cat = document.getElementById('f-category').value;
   const sub = document.getElementById('f-subcategory').value;
   document.getElementById('cat-subcat-preview').textContent =
-    (cat && sub) ? `${cat} (${sub})` : 'Will populate automatically';
+    (cat && sub) ? `${cat}  (${sub})` : 'Will populate automatically';
   if (sub) document.getElementById('f-description').value = sub;
 }
 
@@ -1026,7 +1026,7 @@ function saveEntry() {
     description:   desc,
     amountCAD:     parseFloat(amtCAD) || 0,
     amountLocal:   parseFloat(amtLocal) || 0,
-    catSubcat:     cat && sub ? `${cat} (${sub})` : cat,
+    catSubcat:     cat && sub ? `${cat}  (${sub})` : cat,
     notes:         document.getElementById('f-notes').value.trim(),
     simplifiedCat: document.getElementById('f-simplified-cat').value,
     category:      cat,

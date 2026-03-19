@@ -1154,7 +1154,7 @@ function catWizardSelect(value) {
 function finishCatWizard() {
   closeCatWizard();
   updateCatDisplay();
-  if (_catState.subCategory) {
+  if (_catState.subCategory && !document.getElementById('f-description').value.trim()) {
     document.getElementById('f-description').value = _catState.subCategory;
   }
 }

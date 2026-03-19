@@ -166,6 +166,28 @@
     -webkit-appearance: none;
     appearance: none;
   }
+
+  /* Form tab — increased row heights and readability */
+  #screen-form input,
+  #screen-form select,
+  #screen-form textarea {
+    font-size: 0.95rem !important;
+    padding: 12px 13px !important;
+  }
+  #screen-form select {
+    background-position: right 13px center;
+    padding-right: 37px !important;
+  }
+  #screen-form label {
+    font-size: 0.70rem;
+    margin-bottom: 5px;
+  }
+  #screen-form .field-group {
+    margin-bottom: 12px;
+  }
+  #screen-form .row-2 {
+    gap: 11px;
+  }
   input:focus, select:focus, textarea:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(62,180,137,0.12);

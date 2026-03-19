@@ -496,6 +496,85 @@
     margin-bottom: 8px;
   }
   .notes-panel.open { display: block; }
+
+  /* Unified category button */
+  .cat-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-display);
+    gap: 8px;
+  }
+  .cat-btn:active { background: var(--surface2); }
+  .cat-btn .placeholder { color: var(--muted); font-style: italic; }
+  .cat-btn svg { flex-shrink: 0; color: var(--muted); }
+
+  /* Category wizard bottom sheet */
+  .cat-wizard-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .cat-wizard-overlay.open { display: flex; }
+  .cat-wizard-sheet {
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface);
+    border-radius: 16px 16px 0 0;
+    padding: 16px 14px calc(16px + env(safe-area-inset-bottom));
+    max-height: 72vh;
+    overflow-y: auto;
+  }
+  .cat-wizard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .cat-wizard-title { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+  .cat-wizard-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 1.1rem;
+    padding: 2px 4px;
+    line-height: 1;
+  }
+  .cat-wizard-breadcrumb {
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+    min-height: 16px;
+  }
+  .cat-wizard-options { display: flex; flex-direction: column; gap: 7px; }
+  .cat-wizard-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 0.9rem;
+    font-family: var(--font-display);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .cat-wizard-option:active { background: var(--surface2); }
 </style>
 </head>
 <body>
@@ -563,30 +642,14 @@
 
     <div class="divider"></div>
 
-    <div class="row-2">
-      <div class="field-group">
-        <label>Simplified Cat</label>
-        <select id="f-simplified-cat" onchange="onSimplifiedCatChange()">
-          <option value="">— select —</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label>Category</label>
-        <select id="f-category" onchange="onCategoryChange()">
-          <option value="">—</option>
-        </select>
-      </div>
-    </div>
-
     <div class="field-group">
-      <label>Sub-Category</label>
-      <select id="f-subcategory" onchange="onSubCategoryChange()">
-        <option value="">— select category first —</option>
-      </select>
-    </div>
-
-    <div class="field-group">
-      <div class="cat-subcat-preview" id="cat-subcat-preview">Will populate automatically</div>
+      <label>Category</label>
+      <button type="button" id="f-cat-btn" class="cat-btn" onclick="openCatWizard()">
+        <span id="f-cat-display" class="placeholder">Tap to select…</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </button>
     </div>
 
     <div class="divider"></div>
@@ -737,6 +800,18 @@
     <button class="btn btn-secondary" onclick="clearAllData()" style="color:var(--danger);border-color:var(--danger)">
       Clear All Local Data
     </button>
+  </div>
+
+  <!-- Category Wizard Overlay -->
+  <div id="cat-wizard-overlay" class="cat-wizard-overlay" onclick="closeCatWizard()">
+    <div class="cat-wizard-sheet" onclick="event.stopPropagation()">
+      <div class="cat-wizard-header">
+        <span class="cat-wizard-title" id="cat-wizard-title">Select Category</span>
+        <button class="cat-wizard-close" onclick="closeCatWizard()">✕</button>
+      </div>
+      <div class="cat-wizard-breadcrumb" id="cat-wizard-breadcrumb"></div>
+      <div class="cat-wizard-options" id="cat-wizard-options"></div>
+    </div>
   </div>
 
   <!-- Bottom Nav -->
@@ -924,7 +999,6 @@ function initForm() {
   populateSelect('f-type', s.types, s.defaultType);
   populateSelect('f-account', s.accounts, s.defaultAccount);
   document.getElementById('f-debit-credit').value = s.defaultDC;
-  buildSimplifiedCatDropdown();
   onAccountChange(); // apply FX state for default account
 }
 
@@ -977,68 +1051,115 @@ function onAmountLocalChange() {
   }
 }
 
-function buildSimplifiedCatDropdown() {
-  const hier = getSettings().categoryHierarchy || {};
-  const el = document.getElementById('f-simplified-cat');
-  el.innerHTML = '<option value="">— select —</option>' +
-    Object.keys(hier).map(k => `<option value="${k}">${k}</option>`).join('');
-  resetCatDownstream();
+// ── Category Wizard ──────────────────────────────────────────
+const _catState = { simplified: '', category: '', subCategory: '' };
+let _catStep = 'simplified';
+
+function openCatWizard() {
+  _catStep = 'simplified';
+  renderCatWizardStep();
+  document.getElementById('cat-wizard-overlay').classList.add('open');
 }
 
-function resetCatDownstream() {
-  document.getElementById('f-category').innerHTML = '<option value="">— select simplified first —</option>';
-  document.getElementById('f-subcategory').innerHTML = '<option value="">— select category first —</option>';
-  document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
+function closeCatWizard() {
+  document.getElementById('cat-wizard-overlay').classList.remove('open');
 }
 
-function onSimplifiedCatChange() {
-  const val = document.getElementById('f-simplified-cat').value;
+function renderCatWizardStep() {
   const hier = getSettings().categoryHierarchy || {};
-  if (!val || !hier[val]) { resetCatDownstream(); return; }
+  let title, breadcrumb, options;
 
-  const cats = Object.keys(hier[val]);
-  const catEl = document.getElementById('f-category');
-  catEl.innerHTML = '<option value="">— select —</option>' +
-    cats.map(c => `<option value="${c}">${c}</option>`).join('');
-  document.getElementById('f-subcategory').innerHTML = '<option value="">— select category first —</option>';
-  document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
+  if (_catStep === 'simplified') {
+    title = 'Select Category';
+    breadcrumb = '';
+    options = Object.keys(hier);
+  } else if (_catStep === 'category') {
+    title = 'Select Sub-Category';
+    breadcrumb = _catState.simplified;
+    options = Object.keys(hier[_catState.simplified] || {});
+  } else {
+    title = 'Select Type';
+    breadcrumb = `${_catState.simplified} › ${_catState.category}`;
+    options = hier[_catState.simplified]?.[_catState.category] || [];
+  }
 
-  // Auto-select if only one category exists
-  if (cats.length === 1) {
-    catEl.value = cats[0];
-    onCategoryChange();
+  document.getElementById('cat-wizard-title').textContent = title;
+  document.getElementById('cat-wizard-breadcrumb').textContent = breadcrumb;
+  const container = document.getElementById('cat-wizard-options');
+  container.innerHTML = '';
+  options.forEach(o => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cat-wizard-option';
+    btn.textContent = o;
+    btn.addEventListener('click', () => catWizardSelect(o));
+    container.appendChild(btn);
+  });
+}
+
+function catWizardSelect(value) {
+  const hier = getSettings().categoryHierarchy || {};
+
+  if (_catStep === 'simplified') {
+    _catState.simplified = value;
+    _catState.category = '';
+    _catState.subCategory = '';
+    const cats = Object.keys(hier[value] || {});
+    if (cats.length === 1) {
+      _catState.category = cats[0];
+      const subs = hier[value][cats[0]] || [];
+      if (subs.length === 1) { _catState.subCategory = subs[0]; finishCatWizard(); return; }
+      _catStep = 'subCategory';
+    } else {
+      _catStep = 'category';
+    }
+    renderCatWizardStep();
+
+  } else if (_catStep === 'category') {
+    _catState.category = value;
+    _catState.subCategory = '';
+    const subs = hier[_catState.simplified]?.[value] || [];
+    if (subs.length === 1) { _catState.subCategory = subs[0]; finishCatWizard(); return; }
+    _catStep = 'subCategory';
+    renderCatWizardStep();
+
+  } else {
+    _catState.subCategory = value;
+    finishCatWizard();
   }
 }
 
-function onCategoryChange() {
-  const simplified = document.getElementById('f-simplified-cat').value;
-  const cat = document.getElementById('f-category').value;
-  const hier = getSettings().categoryHierarchy || {};
-  if (!simplified || !cat || !hier[simplified]?.[cat]) {
-    document.getElementById('f-subcategory').innerHTML = '<option value="">— select category first —</option>';
-    document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
-    return;
-  }
-
-  const subs = hier[simplified][cat];
-  const subEl = document.getElementById('f-subcategory');
-  subEl.innerHTML = '<option value="">— select —</option>' +
-    subs.map(s => `<option value="${s}">${s}</option>`).join('');
-  document.getElementById('cat-subcat-preview').textContent = 'Will populate automatically';
-
-  // Auto-select if only one sub-category exists
-  if (subs.length === 1) {
-    subEl.value = subs[0];
-    onSubCategoryChange();
+function finishCatWizard() {
+  closeCatWizard();
+  updateCatDisplay();
+  if (_catState.subCategory) {
+    document.getElementById('f-description').value = _catState.subCategory;
   }
 }
 
-function onSubCategoryChange() {
-  const cat = document.getElementById('f-category').value;
-  const sub = document.getElementById('f-subcategory').value;
-  document.getElementById('cat-subcat-preview').textContent =
-    (cat && sub) ? `${cat}  (${sub})` : 'Will populate automatically';
-  if (sub) document.getElementById('f-description').value = sub;
+function updateCatDisplay() {
+  const { simplified, category, subCategory } = _catState;
+  const display = document.getElementById('f-cat-display');
+  if (subCategory) {
+    display.textContent = `${simplified} › ${category} › ${subCategory}`;
+    display.className = '';
+  } else if (category) {
+    display.textContent = `${simplified} › ${category}`;
+    display.className = '';
+  } else if (simplified) {
+    display.textContent = simplified;
+    display.className = '';
+  } else {
+    display.textContent = 'Tap to select…';
+    display.className = 'placeholder';
+  }
+}
+
+function resetCatState() {
+  _catState.simplified = '';
+  _catState.category = '';
+  _catState.subCategory = '';
+  updateCatDisplay();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1063,8 +1184,8 @@ function saveEntry() {
     }
   }
 
-  const cat = document.getElementById('f-category').value;
-  const sub = document.getElementById('f-subcategory').value;
+  const cat = _catState.category;
+  const sub = _catState.subCategory;
   const s   = getSettings();
 
   const entryData = {
@@ -1077,7 +1198,7 @@ function saveEntry() {
     amountLocal:   parseFloat(amtLocal) || 0,
     catSubcat:     cat && sub ? `${cat}  (${sub})` : cat,
     notes:         document.getElementById('f-notes').value.trim(),
-    simplifiedCat: document.getElementById('f-simplified-cat').value,
+    simplifiedCat: _catState.simplified,
     category:      cat,
     subCategory:   sub,
   };
@@ -1115,8 +1236,7 @@ function resetForm() {
   document.getElementById('f-notes').value = '';
   document.getElementById('notes-panel').classList.remove('open');
   document.getElementById('notes-toggle').classList.remove('open');
-  document.getElementById('f-simplified-cat').value = '';
-  resetCatDownstream();
+  resetCatState();
   onAccountChange(); // restore FX state for reset account
 }
 

@@ -3,28 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0f1117">
+<meta name="theme-color" content="#3EB489">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ExpenseLog">
 <title>ExpenseLog</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --border: #2e3350;
-    --accent: #6ee7b7;
-    --accent2: #818cf8;
-    --danger: #f87171;
-    --warn: #fbbf24;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --font-display: 'Syne', sans-serif;
-    --font-mono: 'DM Mono', monospace;
+    --bg: #F4F6F9;
+    --surface: #FFFFFF;
+    --surface2: #EEF1F6;
+    --border: #DDE3EC;
+    --accent: #3EB489;
+    --accent2: #0077C5;
+    --danger: #D93025;
+    --warn: #E87722;
+    --text: #1B2A3B;
+    --muted: #8895A5;
+    --font-display: 'Inter', sans-serif;
+    --font-mono: 'Inter', sans-serif;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -32,7 +32,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: var(--font-mono);
+    font-family: var(--font-display);
     margin: 0; padding: 0;
     min-height: 100dvh;
     overflow-x: hidden;
@@ -49,8 +49,8 @@
 
   /* Header */
   .app-header {
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
+    background: var(--accent);
+    border-bottom: none;
     padding: 14px 20px 12px;
     display: flex;
     align-items: center;
@@ -58,23 +58,23 @@
     position: sticky;
     top: 0;
     z-index: 50;
-    backdrop-filter: blur(12px);
+    box-shadow: 0 2px 8px rgba(62,180,137,0.25);
   }
 
   .logo {
     font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 1.25rem;
-    letter-spacing: -0.03em;
-    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    color: #FFFFFF;
   }
-  .logo span { color: var(--text); }
+  .logo span { color: rgba(255,255,255,0.75); }
 
   /* Screens */
   .screen {
     display: none;
     flex: 1;
-    padding: 14px 12px 100px;
+    padding: 16px 14px 100px;
     overflow-y: auto;
     animation: fadeIn 0.2s ease;
   }
@@ -98,6 +98,7 @@
     display: flex;
     z-index: 50;
     padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
   }
 
   .nav-btn {
@@ -114,7 +115,7 @@
     font-family: var(--font-display);
     font-size: 0.6rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     transition: color 0.15s;
     position: relative;
@@ -138,39 +139,39 @@
   }
 
   /* Form elements */
-  .field-group { margin-bottom: 8px; }
+  .field-group { margin-bottom: 10px; }
 
   label {
     display: block;
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     font-family: var(--font-display);
   }
 
   input, select, textarea {
     width: 100%;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
     color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 0.88rem;
-    padding: 8px 12px;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    padding: 10px 12px;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
     -webkit-appearance: none;
     appearance: none;
   }
   input:focus, select:focus, textarea:focus {
-    border-color: var(--accent2);
-    box-shadow: 0 0 0 3px rgba(129,140,248,0.12);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(62,180,137,0.12);
   }
   select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238895A5' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 36px;
@@ -185,34 +186,34 @@
     justify-content: center;
     gap: 6px;
     padding: 13px 20px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: none;
     font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.85rem;
-    letter-spacing: 0.04em;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
     cursor: pointer;
     transition: all 0.15s;
     width: 100%;
   }
-  .btn-primary { background: var(--accent); color: #0f1117; }
-  .btn-primary:active { background: #4ade80; transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #FFFFFF; }
+  .btn-primary:active { background: #34A077; transform: scale(0.98); }
   .btn-secondary {
-    background: var(--surface2);
+    background: var(--surface);
     color: var(--text);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
   }
-  .btn-secondary:active { background: var(--surface); transform: scale(0.98); }
+  .btn-secondary:active { background: var(--surface2); transform: scale(0.98); }
   .btn-danger {
     background: transparent;
     color: var(--danger);
-    border: 1px solid var(--danger);
+    border: 1.5px solid var(--danger);
     padding: 8px 14px;
     font-size: 0.75rem;
     width: auto;
   }
   .btn-sync {
-    background: var(--accent2);
+    background: var(--accent);
     color: white;
     padding: 8px 14px;
     font-size: 0.75rem;
@@ -224,10 +225,10 @@
 
   .section-title {
     font-family: var(--font-display);
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
     color: var(--text);
     display: flex;
     align-items: center;
@@ -244,11 +245,12 @@
   .tx-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 13px 14px;
+    border-radius: 12px;
+    padding: 14px 16px;
     margin-bottom: 10px;
     animation: fadeIn 0.2s ease;
     transition: opacity 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   }
   .tx-card-header {
     display: flex;
@@ -269,13 +271,13 @@
   .chip {
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 2px 7px;
-    font-size: 0.62rem;
+    border-radius: 20px;
+    padding: 3px 9px;
+    font-size: 0.65rem;
     color: var(--muted);
     font-family: var(--font-display);
     font-weight: 600;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
   }
   .tx-actions {
@@ -309,7 +311,7 @@
     max-width: 420px;
   }
   .toast {
-    background: var(--surface2);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px 16px;
@@ -319,7 +321,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
     animation: slideUp 0.25s ease;
     pointer-events: all;
   }
@@ -341,57 +343,65 @@
   .settings-group {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
+    border-radius: 12px;
+    padding: 16px;
     margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   }
-  .settings-group label { color: var(--text); font-size: 0.7rem; }
+  .settings-group label { color: var(--muted); font-size: 0.68rem; }
 
   /* Sync bar */
   .sync-bar {
-    background: var(--surface2);
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
+    border-radius: 12px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
     gap: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   }
   .sync-bar-info {
     font-family: var(--font-display);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: var(--muted);
   }
   .sync-bar-count {
     font-weight: 700;
     color: var(--text);
-    font-size: 1rem;
+    font-size: 1.1rem;
     display: block;
   }
 
   /* Misc */
-  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
   .status-dot {
     width: 7px; height: 7px;
     border-radius: 50%;
     display: inline-block;
-    background: var(--muted);
+    background: rgba(255,255,255,0.5);
     transition: background 0.3s;
   }
   .status-dot.online {
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 0 6px rgba(255,255,255,0.6);
+  }
+
+  #statusLabel {
+    font-size: 0.65rem;
+    font-family: var(--font-display);
+    color: rgba(255,255,255,0.8) !important;
   }
 
   .cat-subcat-preview {
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 10px 12px;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: var(--accent2);
     min-height: 38px;
     display: flex;
@@ -406,6 +416,7 @@
     padding: 2px 5px;
     font-size: 0.75em;
     color: var(--accent2);
+    font-family: monospace;
   }
 
   /* Exchange rate rows in settings */
@@ -420,7 +431,7 @@
   .btn-remove-fx {
     width: 36px; height: 38px;
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 8px;
     color: var(--danger);
     font-size: 1rem;
@@ -429,7 +440,7 @@
     flex-shrink: 0;
     transition: background 0.12s;
   }
-  .btn-remove-fx:active { background: rgba(248,113,113,0.1); }
+  .btn-remove-fx:active { background: rgba(217,48,37,0.08); }
 
   /* FX indicator pill on form */
   .fx-indicator-bar {
@@ -439,9 +450,9 @@
     margin-top: -4px;
     margin-bottom: 10px;
     padding: 7px 11px;
-    background: rgba(251,191,36,0.07);
-    border: 1px solid rgba(251,191,36,0.25);
-    border-radius: 7px;
+    background: rgba(232,119,34,0.06);
+    border: 1px solid rgba(232,119,34,0.25);
+    border-radius: 8px;
     font-family: var(--font-display);
     font-size: 0.72rem;
     font-weight: 600;
@@ -466,9 +477,9 @@
     border: none;
     color: var(--muted);
     font-family: var(--font-display);
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     cursor: pointer;
     padding: 2px 0;
@@ -495,7 +506,7 @@
     <div class="logo">Expense<span>Log</span></div>
     <div style="display:flex;align-items:center;gap:8px">
       <span class="status-dot" id="statusDot"></span>
-      <span style="font-size:0.65rem;font-family:var(--font-display);color:var(--muted)" id="statusLabel">offline</span>
+      <span id="statusLabel">offline</span>
     </div>
   </header>
 

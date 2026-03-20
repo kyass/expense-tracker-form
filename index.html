@@ -113,14 +113,14 @@
     background: transparent;
     color: var(--muted);
     font-family: var(--font-display);
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     transition: color 0.15s;
     position: relative;
   }
-  .nav-btn svg { width: 20px; height: 20px; }
+  .nav-btn svg { width: 18px; height: 18px; }
   .nav-btn.active { color: var(--accent); }
   .nav-btn .nb-badge {
     position: absolute;
@@ -186,6 +186,27 @@
     margin-bottom: 12px;
   }
   #screen-form .row-2 {
+    gap: 11px;
+  }
+  /* Transfer tab — same readability overrides */
+  #screen-transfer input,
+  #screen-transfer select,
+  #screen-transfer textarea {
+    font-size: 0.95rem !important;
+    padding: 12px 13px !important;
+  }
+  #screen-transfer select {
+    background-position: right 13px center;
+    padding-right: 37px !important;
+  }
+  #screen-transfer label {
+    font-size: 0.70rem;
+    margin-bottom: 5px;
+  }
+  #screen-transfer .field-group {
+    margin-bottom: 12px;
+  }
+  #screen-transfer .row-2 {
     gap: 11px;
   }
   input:focus, select:focus, textarea:focus {
@@ -519,6 +540,29 @@
   }
   .notes-panel.open { display: block; }
 
+  /* Transfer pair grouping on pending screen */
+  .tx-pair-group {
+    border: 2px solid var(--accent2);
+    border-radius: 14px;
+    padding: 6px;
+    margin-bottom: 12px;
+  }
+  .tx-pair-group .tx-card {
+    margin-bottom: 6px;
+  }
+  .tx-pair-group .tx-card:last-child {
+    margin-bottom: 0;
+  }
+  .tx-pair-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent2);
+    padding: 2px 10px 6px;
+    font-family: var(--font-display);
+  }
+
   /* Unified category button */
   .cat-btn {
     width: 100%;
@@ -691,6 +735,71 @@
     </button>
   </div>
 
+  <!-- ══ SCREEN: Transfer ═════════════════════════════════ -->
+  <div class="screen" id="screen-transfer">
+    <div class="section-title">Transfer Between Accounts</div>
+
+    <div class="field-group">
+      <label>Date</label>
+      <input type="date" id="t-date">
+    </div>
+
+    <div class="field-group row-2">
+      <div>
+        <label>From Account</label>
+        <select id="t-source-account"></select>
+      </div>
+      <div>
+        <label>To Account</label>
+        <select id="t-dest-account"></select>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Description</label>
+      <input type="text" id="t-description" placeholder="What is this transfer for?">
+    </div>
+
+    <div class="field-group row-2">
+      <div>
+        <label>Amount (CAD)</label>
+        <input type="number" id="t-amount-cad" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div>
+        <label>Amount (Local)</label>
+        <input type="number" id="t-amount-local" placeholder="0.00" step="0.01" min="0">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field-group">
+      <label>Category</label>
+      <button type="button" id="t-cat-btn" class="cat-btn" onclick="openCatWizard('transfer')">
+        <span id="t-cat-display" class="placeholder">Tap to select…</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="notes-toggle" id="t-notes-toggle" onclick="toggleTransferNotes()">
+      <span class="toggle-icon">+</span> Add note
+    </button>
+    <div class="notes-panel" id="t-notes-panel">
+      <textarea id="t-notes" placeholder="Optional notes…" style="min-height:56px"></textarea>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveTransfer()" style="margin-top:6px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18M17 8l4 4m0 0l-4 4m4-4H3"/>
+      </svg>
+      Log Transfer
+    </button>
+  </div>
+
   <!-- ══ SCREEN: Pending ═══════════════════════════════════ -->
   <div class="screen" id="screen-pending">
     <div class="section-title">Pending Sync</div>
@@ -844,6 +953,12 @@
       </svg>
       New
     </button>
+    <button class="nav-btn" id="nav-transfer" onclick="showScreen('transfer')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18M17 8l4 4m0 0l-4 4m4-4H3"/>
+      </svg>
+      Transfer
+    </button>
     <button class="nav-btn" id="nav-pending" onclick="showScreen('pending')">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10"/>
@@ -875,7 +990,7 @@ const DEFAULT_SETTINGS = {
   defaultType: 'Expenses',
   defaultAccount: 'WS CC',
   defaultDC: 'debit',
-  types: ['Expenses', 'Income', 'Transfer', 'Savings'],
+  types: ['Expenses', 'Income', 'Transfer', 'Savings', 'Hide from Budgets & Trends'],
   accounts: ['WS CC', 'Chequing', 'Savings', 'Cash'],
   exchangeRates: {},   // { "AccountName": 0.73, ... }
   categoryHierarchy: {
@@ -913,6 +1028,10 @@ const DEFAULT_SETTINGS = {
     },
     "Savings": {
       "Transfers": ["TFSA", "RRSP", "Emergency Fund", "Investment Account"]
+    },
+    "Hide from Budgets & Trends": {
+      "Transfers": ["Account Transfer", "Credit Card Payment", "Investment Transfer"],
+      "Other": ["Rebalancing", "Adjustment"]
     }
   }
 };
@@ -923,7 +1042,12 @@ const DEFAULT_SETTINGS = {
 function getSettings() {
   try {
     const s = localStorage.getItem(KEYS.SETTINGS);
-    return s ? { ...DEFAULT_SETTINGS, ...JSON.parse(s) } : { ...DEFAULT_SETTINGS };
+    const settings = s ? { ...DEFAULT_SETTINGS, ...JSON.parse(s) } : { ...DEFAULT_SETTINGS };
+    // Migrate: ensure "Hide from Budgets & Trends" exists in categoryHierarchy
+    if (settings.categoryHierarchy && !settings.categoryHierarchy['Hide from Budgets & Trends']) {
+      settings.categoryHierarchy['Hide from Budgets & Trends'] = DEFAULT_SETTINGS.categoryHierarchy['Hide from Budgets & Trends'];
+    }
+    return settings;
   } catch { return { ...DEFAULT_SETTINGS }; }
 }
 function persistSettings(data) {
@@ -962,6 +1086,7 @@ function showScreen(name) {
   document.getElementById('nav-' + name).classList.add('active');
   if (name === 'pending') renderPending();
   if (name === 'settings') loadSettingsUI();
+  if (name === 'transfer') initTransferForm();
 }
 
 function updateBadge() {
@@ -1075,10 +1200,24 @@ function onAmountLocalChange() {
 
 // ── Category Wizard ──────────────────────────────────────────
 const _catState = { simplified: '', category: '', subCategory: '' };
+const _transferCatState = { simplified: '', category: '', subCategory: '' };
 let _catStep = 'simplified';
+let _catWizardContext = 'form';
 
-function openCatWizard() {
-  _catStep = 'simplified';
+function _activeCatState() {
+  return _catWizardContext === 'transfer' ? _transferCatState : _catState;
+}
+
+function openCatWizard(context) {
+  _catWizardContext = context || 'form';
+  if (_catWizardContext === 'transfer') {
+    _transferCatState.simplified = 'Hide from Budgets & Trends';
+    _transferCatState.category = '';
+    _transferCatState.subCategory = '';
+    _catStep = 'category';
+  } else {
+    _catStep = 'simplified';
+  }
   renderCatWizardStep();
   document.getElementById('cat-wizard-overlay').classList.add('open');
 }
@@ -1089,6 +1228,7 @@ function closeCatWizard() {
 
 function renderCatWizardStep() {
   const hier = getSettings().categoryHierarchy || {};
+  const state = _activeCatState();
   let title, breadcrumb, options;
 
   if (_catStep === 'simplified') {
@@ -1097,12 +1237,12 @@ function renderCatWizardStep() {
     options = Object.keys(hier);
   } else if (_catStep === 'category') {
     title = 'Select Sub-Category';
-    breadcrumb = _catState.simplified;
-    options = Object.keys(hier[_catState.simplified] || {});
+    breadcrumb = state.simplified;
+    options = Object.keys(hier[state.simplified] || {});
   } else {
     title = 'Select Type';
-    breadcrumb = `${_catState.simplified} › ${_catState.category}`;
-    options = hier[_catState.simplified]?.[_catState.category] || [];
+    breadcrumb = `${state.simplified} › ${state.category}`;
+    options = hier[state.simplified]?.[state.category] || [];
   }
 
   document.getElementById('cat-wizard-title').textContent = title;
@@ -1121,16 +1261,17 @@ function renderCatWizardStep() {
 
 function catWizardSelect(value) {
   const hier = getSettings().categoryHierarchy || {};
+  const state = _activeCatState();
 
   if (_catStep === 'simplified') {
-    _catState.simplified = value;
-    _catState.category = '';
-    _catState.subCategory = '';
+    state.simplified = value;
+    state.category = '';
+    state.subCategory = '';
     const cats = Object.keys(hier[value] || {});
     if (cats.length === 1) {
-      _catState.category = cats[0];
+      state.category = cats[0];
       const subs = hier[value][cats[0]] || [];
-      if (subs.length === 1) { _catState.subCategory = subs[0]; finishCatWizard(); return; }
+      if (subs.length === 1) { state.subCategory = subs[0]; finishCatWizard(); return; }
       _catStep = 'subCategory';
     } else {
       _catStep = 'category';
@@ -1138,24 +1279,31 @@ function catWizardSelect(value) {
     renderCatWizardStep();
 
   } else if (_catStep === 'category') {
-    _catState.category = value;
-    _catState.subCategory = '';
-    const subs = hier[_catState.simplified]?.[value] || [];
-    if (subs.length === 1) { _catState.subCategory = subs[0]; finishCatWizard(); return; }
+    state.category = value;
+    state.subCategory = '';
+    const subs = hier[state.simplified]?.[value] || [];
+    if (subs.length === 1) { state.subCategory = subs[0]; finishCatWizard(); return; }
     _catStep = 'subCategory';
     renderCatWizardStep();
 
   } else {
-    _catState.subCategory = value;
+    state.subCategory = value;
     finishCatWizard();
   }
 }
 
 function finishCatWizard() {
   closeCatWizard();
-  updateCatDisplay();
-  if (_catState.subCategory && !document.getElementById('f-description').value.trim()) {
-    document.getElementById('f-description').value = _catState.subCategory;
+  if (_catWizardContext === 'transfer') {
+    updateTransferCatDisplay();
+    if (_transferCatState.subCategory && !document.getElementById('t-description').value.trim()) {
+      document.getElementById('t-description').value = _transferCatState.subCategory;
+    }
+  } else {
+    updateCatDisplay();
+    if (_catState.subCategory && !document.getElementById('f-description').value.trim()) {
+      document.getElementById('f-description').value = _catState.subCategory;
+    }
   }
 }
 
@@ -1182,6 +1330,125 @@ function resetCatState() {
   _catState.category = '';
   _catState.subCategory = '';
   updateCatDisplay();
+}
+
+// ── Transfer Category Display ────────────────────────────────
+function updateTransferCatDisplay() {
+  const { simplified, category, subCategory } = _transferCatState;
+  const display = document.getElementById('t-cat-display');
+  if (subCategory) {
+    display.textContent = `${simplified} › ${category} › ${subCategory}`;
+    display.className = '';
+  } else if (category) {
+    display.textContent = `${simplified} › ${category}`;
+    display.className = '';
+  } else if (simplified) {
+    display.textContent = simplified;
+    display.className = '';
+  } else {
+    display.textContent = 'Tap to select…';
+    display.className = 'placeholder';
+  }
+}
+
+function resetTransferCatState() {
+  _transferCatState.simplified = 'Hide from Budgets & Trends';
+  _transferCatState.category = '';
+  _transferCatState.subCategory = '';
+  updateTransferCatDisplay();
+}
+
+// ── Transfer Form ────────────────────────────────────────────
+function initTransferForm() {
+  const s = getSettings();
+  document.getElementById('t-date').value = todayStr();
+  populateSelect('t-source-account', s.accounts, s.accounts[0]);
+  populateSelect('t-dest-account', s.accounts, s.accounts.length > 1 ? s.accounts[1] : s.accounts[0]);
+  resetTransferCatState();
+}
+
+function toggleTransferNotes() {
+  const panel  = document.getElementById('t-notes-panel');
+  const toggle = document.getElementById('t-notes-toggle');
+  const open   = panel.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+  if (open) document.getElementById('t-notes').focus();
+}
+
+async function saveTransfer() {
+  const desc       = document.getElementById('t-description').value.trim();
+  const srcAccount = document.getElementById('t-source-account').value;
+  const dstAccount = document.getElementById('t-dest-account').value;
+  const amtCAD     = document.getElementById('t-amount-cad').value;
+  const amtLocal   = document.getElementById('t-amount-local').value;
+
+  if (!desc)                                    { toast('Please enter a description', 'error'); return; }
+  if (!amtCAD || parseFloat(amtCAD) <= 0)       { toast('Please enter a CAD amount', 'error'); return; }
+  if (srcAccount === dstAccount)                 { toast('Source and destination must be different', 'error'); return; }
+
+  const cat = _transferCatState.category;
+  const sub = _transferCatState.subCategory;
+  const s   = getSettings();
+
+  const transferGroupId = 'xfer-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+
+  const baseEntry = {
+    date:          document.getElementById('t-date').value,
+    type:          'Hide from Budgets & Trends',
+    description:   desc,
+    amountCAD:     parseFloat(amtCAD) || 0,
+    amountLocal:   parseFloat(amtLocal) || 0,
+    catSubcat:     cat && sub ? `${cat}  (${sub})` : cat,
+    notes:         document.getElementById('t-notes').value.trim(),
+    simplifiedCat: 'Hide from Budgets & Trends',
+    category:      cat,
+    subCategory:   sub,
+    transferGroupId,
+  };
+
+  const debitEntry  = { ...baseEntry, debitCredit: 'debit',  account: srcAccount };
+  const creditEntry = { ...baseEntry, debitCredit: 'credit', account: dstAccount };
+
+  if (navigator.onLine && s.apiUrl) {
+    try {
+      await gasRequest(s.apiUrl, buildPayload(debitEntry, s.sheetName));
+      try {
+        await gasRequest(s.apiUrl, buildPayload(creditEntry, s.sheetName));
+        toast('Transfer logged to Google Sheets ✓', 'success');
+      } catch {
+        enqueue(creditEntry);
+        toast('Partial sync — credit entry saved to Pending', 'error');
+      }
+    } catch {
+      enqueue(debitEntry);
+      enqueue(creditEntry);
+      toast('Sync failed — saved to Pending', 'error');
+    }
+  } else if (!s.apiUrl) {
+    enqueue(debitEntry);
+    enqueue(creditEntry);
+    toast('Saved to Pending (no API URL configured)', 'info');
+  } else {
+    enqueue(debitEntry);
+    enqueue(creditEntry);
+    toast('Offline — saved to Pending', 'info');
+  }
+
+  resetTransferForm();
+}
+
+function resetTransferForm() {
+  const s = getSettings();
+  document.getElementById('t-date').value = todayStr();
+  document.getElementById('t-source-account').value = s.accounts[0] || '';
+  document.getElementById('t-dest-account').value = s.accounts.length > 1 ? s.accounts[1] : (s.accounts[0] || '');
+  document.getElementById('t-description').value = '';
+  document.getElementById('t-amount-cad').value = '';
+  document.getElementById('t-amount-local').value = '';
+  document.getElementById('t-notes').value = '';
+  document.getElementById('t-notes-panel').classList.remove('open');
+  document.getElementById('t-notes-toggle').classList.remove('open');
+  resetTransferCatState();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1280,7 +1547,35 @@ function renderPending() {
     return;
   }
 
-  document.getElementById('pendingList').innerHTML = queue.map(e => `
+  // Separate transfers from regular entries
+  const groups = {};
+  const regular = [];
+  queue.forEach(e => {
+    if (e.transferGroupId) {
+      if (!groups[e.transferGroupId]) groups[e.transferGroupId] = [];
+      groups[e.transferGroupId].push(e);
+    } else {
+      regular.push(e);
+    }
+  });
+
+  let html = '';
+
+  // Render transfer groups
+  Object.values(groups).forEach(entries => {
+    html += `<div class="tx-pair-group"><div class="tx-pair-label">⇄ Transfer</div>`;
+    entries.forEach(e => { html += renderTxCard(e); });
+    html += `</div>`;
+  });
+
+  // Render regular entries
+  regular.forEach(e => { html += renderTxCard(e); });
+
+  document.getElementById('pendingList').innerHTML = html;
+}
+
+function renderTxCard(e) {
+  return `
     <div class="tx-card" id="card-${e.id}">
       <div class="tx-card-header">
         <div class="tx-desc">${esc(e.description)}</div>
@@ -1305,8 +1600,7 @@ function renderPending() {
           Sync
         </button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
 }
 
 function deleteEntry(id) {

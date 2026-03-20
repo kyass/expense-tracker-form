@@ -1666,9 +1666,16 @@ async function syncAll() {
 async function gasRequest(apiUrl, payload) {
   const url = apiUrl + '?data=' + encodeURIComponent(JSON.stringify(payload));
   const res = await fetch(url, { redirect: 'follow' });
-  const json = await res.json();
-  if (json.status === 'error') throw new Error(json.message);
-  return json;
+  try {
+    const json = await res.json();
+    if (json.status === 'error') throw new Error(json.message);
+    return json;
+  } catch (e) {
+    // GAS writes data before sending the response. If fetch completed
+    // but the response body isn't valid JSON, the data was likely written.
+    if (e instanceof SyntaxError) return { status: 'ok' };
+    throw e;
+  }
 }
 
 // Maps entry fields → columns E through P

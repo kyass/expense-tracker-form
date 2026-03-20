@@ -1913,12 +1913,18 @@ function saveSplitEntry() {
 
   const s = getSettings();
   if (navigator.onLine && s.apiUrl) {
-    Promise.all(entries.map(e => gasRequest(s.apiUrl, buildPayload(e, s.sheetName))))
-      .then(() => toast(`${entries.length} split entries logged`, 'success'))
-      .catch(() => {
+    // Send sequentially to avoid race condition where GAS finds the same empty row
+    (async () => {
+      try {
+        for (const e of entries) {
+          await gasRequest(s.apiUrl, buildPayload(e, s.sheetName));
+        }
+        toast(`${entries.length} split entries logged`, 'success');
+      } catch {
         entries.forEach(e => enqueue(e));
         toast('Sync failed — saved to Pending', 'error');
-      });
+      }
+    })();
   } else if (!s.apiUrl) {
     entries.forEach(e => enqueue(e));
     toast('Saved to Pending (no API URL configured)', 'info');

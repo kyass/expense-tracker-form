@@ -641,6 +641,144 @@
     cursor: pointer;
   }
   .cat-wizard-option:active { background: var(--surface2); }
+
+  /* Split transaction toggle */
+  .split-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 9px 13px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+  }
+  .split-toggle-row span {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .split-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  .split-switch input { display: none; }
+  .split-switch .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 24px;
+    transition: background 0.2s;
+  }
+  .split-switch .slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .split-switch input:checked + .slider { background: var(--accent); }
+  .split-switch input:checked + .slider::before { transform: translateX(20px); }
+
+  /* Split container */
+  #split-container { display: none; }
+  #split-container.visible { display: block; }
+
+  .split-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .split-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .split-row-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .split-row-inner {
+    display: grid;
+    grid-template-columns: 1fr 100px;
+    gap: 8px;
+    align-items: end;
+  }
+  .split-row .cat-btn {
+    font-size: 0.82rem;
+    padding: 9px 10px;
+  }
+  .split-row input[type="number"],
+  .split-row input[type="text"] {
+    font-size: 0.9rem !important;
+    padding: 9px 10px !important;
+  }
+  .split-remove {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--danger);
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.12s;
+    padding: 0;
+  }
+  .split-remove:active { background: rgba(217,48,37,0.08); }
+
+  .split-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .split-summary .allocated { color: var(--text); }
+  .split-summary .remaining { color: var(--danger); }
+  .split-summary .remaining.balanced { color: var(--accent); }
+
+  .split-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 9px;
+    background: var(--surface);
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .split-add-btn:active { background: var(--surface2); color: var(--text); }
 </style>
 </head>
 <body>
@@ -658,6 +796,14 @@
   <!-- ══ SCREEN: Form ══════════════════════════════════════ -->
   <div class="screen active" id="screen-form">
     <div class="section-title">New Entry</div>
+
+    <div class="split-toggle-row">
+      <span>Split Transaction</span>
+      <label class="split-switch">
+        <input type="checkbox" id="f-split-toggle" onchange="onSplitToggle()">
+        <span class="slider"></span>
+      </label>
+    </div>
 
     <div class="field-group row-2">
       <div>
@@ -684,41 +830,67 @@
       </div>
     </div>
 
-    <div class="field-group">
+    <div class="field-group" id="f-description-group">
       <label>Description</label>
       <input type="text" id="f-description" placeholder="What was this for?">
     </div>
 
-    <div class="field-group row-2">
-      <div>
-        <label id="lbl-amount-cad">Amount (CAD)</label>
-        <input type="number" id="f-amount-cad" placeholder="0.00" step="0.01" min="0">
+    <div id="normal-amount-section">
+      <div class="field-group row-2">
+        <div>
+          <label id="lbl-amount-cad">Amount (CAD)</label>
+          <input type="number" id="f-amount-cad" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div>
+          <label>Amount (Local)</label>
+          <input type="number" id="f-amount-local" placeholder="0.00" step="0.01" min="0" oninput="onAmountLocalChange()">
+        </div>
       </div>
-      <div>
-        <label>Amount (Local)</label>
-        <input type="number" id="f-amount-local" placeholder="0.00" step="0.01" min="0" oninput="onAmountLocalChange()">
+
+      <div class="fx-indicator-bar" id="fx-indicator">
+        <span>⇄</span>
+        <span id="fx-rate-label"></span>
+        <span style="color:var(--muted);font-weight:400">· CAD calculated automatically from Local amount</span>
       </div>
+
+      <div class="divider"></div>
+
+      <div class="field-group">
+        <label>Category</label>
+        <button type="button" id="f-cat-btn" class="cat-btn" onclick="openCatWizard()">
+          <span id="f-cat-display" class="placeholder">Tap to select…</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="divider"></div>
     </div>
 
-    <div class="fx-indicator-bar" id="fx-indicator">
-      <span>⇄</span>
-      <span id="fx-rate-label"></span>
-      <span style="color:var(--muted);font-weight:400">· CAD calculated automatically from Local amount</span>
+    <div id="split-container">
+      <div class="field-group">
+        <label id="split-total-label">Total Amount (CAD)</label>
+        <input type="number" id="f-split-total" placeholder="0.00" step="0.01" min="0" oninput="updateSplitSummary()">
+      </div>
+
+      <div class="fx-indicator-bar" id="split-fx-indicator">
+        <span>⇄</span>
+        <span id="split-fx-rate-label"></span>
+        <span style="color:var(--muted);font-weight:400">· CAD calculated automatically per split</span>
+      </div>
+
+      <div id="split-rows"></div>
+
+      <div class="split-summary">
+        <span>Allocated: <strong class="allocated" id="split-allocated">0.00</strong></span>
+        <span>Remaining: <strong class="remaining" id="split-remaining">0.00</strong></span>
+      </div>
+
+      <button type="button" class="split-add-btn" onclick="addSplitRow()">+ Add Split</button>
+
+      <div class="divider"></div>
     </div>
-
-    <div class="divider"></div>
-
-    <div class="field-group">
-      <label>Category</label>
-      <button type="button" id="f-cat-btn" class="cat-btn" onclick="openCatWizard()">
-        <span id="f-cat-display" class="placeholder">Tap to select…</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="divider"></div>
 
     <button class="notes-toggle" id="notes-toggle" onclick="toggleNotes()">
       <span class="toggle-icon">+</span> Add note
@@ -1175,6 +1347,8 @@ function onAccountChange() {
     indicator.classList.remove('visible');
     // Don't wipe CAD if user already typed something
   }
+  // Update split FX state if in split mode
+  if (_splitMode) updateSplitFxState();
 }
 
 function getExchangeRate(account) {
@@ -1204,13 +1378,22 @@ const _transferCatState = { simplified: '', category: '', subCategory: '' };
 let _catStep = 'simplified';
 let _catWizardContext = 'form';
 
+// Split transaction state
+let _splitMode = false;
+let _splitRows = [];
+let _splitWizardIndex = -1;
+
 function _activeCatState() {
+  if (_catWizardContext === 'split') return _splitRows[_splitWizardIndex];
   return _catWizardContext === 'transfer' ? _transferCatState : _catState;
 }
 
-function openCatWizard(context) {
+function openCatWizard(context, splitIndex) {
   _catWizardContext = context || 'form';
-  if (_catWizardContext === 'transfer') {
+  if (_catWizardContext === 'split') {
+    _splitWizardIndex = splitIndex;
+    _catStep = 'simplified';
+  } else if (_catWizardContext === 'transfer') {
     _transferCatState.simplified = 'Hide from Budgets & Trends';
     _transferCatState.category = '';
     _transferCatState.subCategory = '';
@@ -1294,7 +1477,15 @@ function catWizardSelect(value) {
 
 function finishCatWizard() {
   closeCatWizard();
-  if (_catWizardContext === 'transfer') {
+  if (_catWizardContext === 'split') {
+    updateSplitCatDisplay(_splitWizardIndex);
+    const state = _splitRows[_splitWizardIndex];
+    const descEl = document.querySelector(`.split-desc[data-index="${_splitWizardIndex}"]`);
+    if (state.subCategory && descEl && !descEl.value.trim()) {
+      descEl.value = state.subCategory;
+      state._desc = state.subCategory;
+    }
+  } else if (_catWizardContext === 'transfer') {
     updateTransferCatDisplay();
     if (_transferCatState.subCategory && !document.getElementById('t-description').value.trim()) {
       document.getElementById('t-description').value = _transferCatState.subCategory;
@@ -1452,16 +1643,158 @@ function resetTransferForm() {
 }
 
 // ══════════════════════════════════════════════════════════════
+// SPLIT TRANSACTION
+// ══════════════════════════════════════════════════════════════
+function onSplitToggle() {
+  _splitMode = document.getElementById('f-split-toggle').checked;
+  const normalSection = document.getElementById('normal-amount-section');
+  const splitContainer = document.getElementById('split-container');
+  const descGroup = document.getElementById('f-description-group');
+  if (_splitMode) {
+    normalSection.style.display = 'none';
+    descGroup.style.display = 'none';
+    splitContainer.classList.add('visible');
+    if (_splitRows.length === 0) {
+      _splitRows.push(
+        { simplified: '', category: '', subCategory: '', _desc: '', _amount: '' },
+        { simplified: '', category: '', subCategory: '', _desc: '', _amount: '' }
+      );
+    }
+    renderSplitRows();
+    updateSplitFxState();
+  } else {
+    normalSection.style.display = '';
+    descGroup.style.display = '';
+    splitContainer.classList.remove('visible');
+  }
+}
+
+function updateSplitFxState() {
+  const account = document.getElementById('f-account').value;
+  const rate = getExchangeRate(account);
+  const label = document.getElementById('split-total-label');
+  const fxBar = document.getElementById('split-fx-indicator');
+  const fxLabel = document.getElementById('split-fx-rate-label');
+  if (rate !== null) {
+    label.textContent = 'Total Amount (Local)';
+    fxBar.classList.add('visible');
+    fxLabel.textContent = `1 Local = ${rate} CAD`;
+  } else {
+    label.textContent = 'Total Amount (CAD)';
+    fxBar.classList.remove('visible');
+  }
+}
+
+function renderSplitRows() {
+  const container = document.getElementById('split-rows');
+  const chevronSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>';
+  container.innerHTML = _splitRows.map((row, i) => {
+    const catText = row.subCategory
+      ? `${row.simplified} › ${row.category} › ${row.subCategory}`
+      : row.category
+        ? `${row.simplified} › ${row.category}`
+        : row.simplified || '';
+    const catClass = catText ? '' : 'placeholder';
+    const catDisplay = catText || 'Tap to select…';
+    const removeBtn = _splitRows.length > 2
+      ? `<button type="button" class="split-remove" onclick="removeSplitRow(${i})">✕</button>`
+      : '';
+    const descVal = (row._desc || '').replace(/"/g, '&quot;');
+    return `<div class="split-row" data-split-index="${i}">
+      <div class="split-row-header">
+        <span class="split-row-label">Split ${i + 1}</span>
+        ${removeBtn}
+      </div>
+      <div style="margin-bottom:6px">
+        <label>Description</label>
+        <input type="text" class="split-desc" data-index="${i}" placeholder="What was this for?" value="${descVal}">
+      </div>
+      <div class="split-row-inner">
+        <div>
+          <label>Category</label>
+          <button type="button" class="cat-btn" onclick="openCatWizard('split', ${i})">
+            <span class="${catClass}" id="split-cat-${i}">${catDisplay}</span>
+            ${chevronSvg}
+          </button>
+        </div>
+        <div>
+          <label>Amount</label>
+          <input type="number" class="split-amount" data-index="${i}" placeholder="0.00" step="0.01" min="0" oninput="updateSplitSummary()" value="${row._amount || ''}">
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateSplitSummary();
+}
+
+function addSplitRow() {
+  // Save current inputs before re-render
+  saveSplitAmounts();
+  _splitRows.push({ simplified: '', category: '', subCategory: '', _desc: '', _amount: '' });
+  renderSplitRows();
+}
+
+function removeSplitRow(index) {
+  if (_splitRows.length <= 2) return;
+  saveSplitAmounts();
+  _splitRows.splice(index, 1);
+  renderSplitRows();
+}
+
+function saveSplitAmounts() {
+  document.querySelectorAll('.split-amount').forEach((el, i) => {
+    if (_splitRows[i]) _splitRows[i]._amount = el.value;
+  });
+  document.querySelectorAll('.split-desc').forEach((el, i) => {
+    if (_splitRows[i]) _splitRows[i]._desc = el.value;
+  });
+}
+
+function updateSplitSummary() {
+  const total = parseFloat(document.getElementById('f-split-total').value) || 0;
+  let sum = 0;
+  document.querySelectorAll('.split-amount').forEach(el => {
+    sum += parseFloat(el.value) || 0;
+  });
+  const remaining = total - sum;
+  document.getElementById('split-allocated').textContent = sum.toFixed(2);
+  const remEl = document.getElementById('split-remaining');
+  remEl.textContent = remaining.toFixed(2);
+  remEl.className = Math.abs(remaining) < 0.01 && total > 0 ? 'remaining balanced' : 'remaining';
+}
+
+function updateSplitCatDisplay(index) {
+  const row = _splitRows[index];
+  const el = document.getElementById('split-cat-' + index);
+  if (!el) return;
+  if (row.subCategory) {
+    el.textContent = `${row.simplified} › ${row.category} › ${row.subCategory}`;
+    el.className = '';
+  } else if (row.category) {
+    el.textContent = `${row.simplified} › ${row.category}`;
+    el.className = '';
+  } else if (row.simplified) {
+    el.textContent = row.simplified;
+    el.className = '';
+  } else {
+    el.textContent = 'Tap to select…';
+    el.className = 'placeholder';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 // SAVE ENTRY
 // ══════════════════════════════════════════════════════════════
 function saveEntry() {
-  const desc    = document.getElementById('f-description').value.trim();
+  if (_splitMode) { saveSplitEntry(); return; }
+
+  const desc = document.getElementById('f-description').value.trim();
+  if (!desc) { toast('Please enter a description', 'error'); return; }
+
   const account = document.getElementById('f-account').value;
   const rate     = getExchangeRate(account);
   const amtLocal = document.getElementById('f-amount-local').value;
   const amtCAD   = document.getElementById('f-amount-cad').value;
-
-  if (!desc) { toast('Please enter a description', 'error'); return; }
 
   if (rate !== null) {
     if (!amtLocal || parseFloat(amtLocal) <= 0) {
@@ -1513,6 +1846,96 @@ function saveEntry() {
   resetForm();
 }
 
+function saveSplitEntry() {
+  const account = document.getElementById('f-account').value;
+  const rate = getExchangeRate(account);
+  const totalInput = parseFloat(document.getElementById('f-split-total').value);
+
+  if (!totalInput || totalInput <= 0) {
+    toast('Please enter the total amount', 'error'); return;
+  }
+
+  // Save current inputs from DOM
+  saveSplitAmounts();
+
+  // Validate each split
+  for (let i = 0; i < _splitRows.length; i++) {
+    const row = _splitRows[i];
+    const desc = (row._desc || '').trim();
+    if (!desc) {
+      toast(`Split ${i + 1}: please enter a description`, 'error'); return;
+    }
+    if (!row.category || !row.subCategory) {
+      toast(`Split ${i + 1}: please select a category`, 'error'); return;
+    }
+    const amt = parseFloat(row._amount) || 0;
+    if (amt <= 0) {
+      toast(`Split ${i + 1}: please enter an amount`, 'error'); return;
+    }
+  }
+
+  // Validate sum matches total
+  const splitAmounts = _splitRows.map(r => parseFloat(r._amount) || 0);
+  const sum = splitAmounts.reduce((a, b) => a + b, 0);
+  if (Math.abs(sum - totalInput) > 0.01) {
+    toast(`Splits total ${sum.toFixed(2)} but must equal ${totalInput.toFixed(2)}`, 'error'); return;
+  }
+
+  const shared = {
+    date:        document.getElementById('f-date').value,
+    type:        document.getElementById('f-type').value,
+    debitCredit: document.getElementById('f-debit-credit').value,
+    account,
+    notes:       document.getElementById('f-notes').value.trim(),
+  };
+
+  const entries = _splitRows.map((row, i) => {
+    const splitAmt = splitAmounts[i];
+    let amountCAD, amountLocal;
+    if (rate !== null) {
+      amountLocal = splitAmt;
+      amountCAD = parseFloat((splitAmt / rate).toFixed(2));
+    } else {
+      amountCAD = splitAmt;
+      amountLocal = 0;
+    }
+    return {
+      ...shared,
+      description: (row._desc || '').trim(),
+      amountCAD,
+      amountLocal,
+      catSubcat: row.category && row.subCategory ? `${row.category}  (${row.subCategory})` : row.category,
+      simplifiedCat: row.simplified,
+      category: row.category,
+      subCategory: row.subCategory,
+    };
+  });
+
+  const s = getSettings();
+  if (navigator.onLine && s.apiUrl) {
+    // Send sequentially to avoid race condition where GAS finds the same empty row
+    (async () => {
+      try {
+        for (const e of entries) {
+          await gasRequest(s.apiUrl, buildPayload(e, s.sheetName));
+        }
+        toast(`${entries.length} split entries logged`, 'success');
+      } catch {
+        entries.forEach(e => enqueue(e));
+        toast('Sync failed — saved to Pending', 'error');
+      }
+    })();
+  } else if (!s.apiUrl) {
+    entries.forEach(e => enqueue(e));
+    toast('Saved to Pending (no API URL configured)', 'info');
+  } else {
+    entries.forEach(e => enqueue(e));
+    toast('Offline — saved to Pending', 'info');
+  }
+
+  resetForm();
+}
+
 function resetForm() {
   const s = getSettings();
   document.getElementById('f-date').value = todayStr();
@@ -1526,6 +1949,15 @@ function resetForm() {
   document.getElementById('notes-panel').classList.remove('open');
   document.getElementById('notes-toggle').classList.remove('open');
   resetCatState();
+  // Reset split state
+  _splitMode = false;
+  _splitRows = [];
+  document.getElementById('f-split-toggle').checked = false;
+  document.getElementById('split-container').classList.remove('visible');
+  document.getElementById('normal-amount-section').style.display = '';
+  document.getElementById('f-description-group').style.display = '';
+  document.getElementById('f-split-total').value = '';
+  document.getElementById('split-rows').innerHTML = '';
   onAccountChange(); // restore FX state for reset account
 }
 

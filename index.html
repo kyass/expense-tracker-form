@@ -1394,10 +1394,19 @@ function openCatWizard(context, splitIndex) {
     _splitWizardIndex = splitIndex;
     _catStep = 'simplified';
   } else if (_catWizardContext === 'transfer') {
+    const hier = getSettings().categoryHierarchy || {};
     _transferCatState.simplified = 'Transfer';
     _transferCatState.category = '';
     _transferCatState.subCategory = '';
-    _catStep = 'category';
+    const cats = Object.keys(hier['Transfer'] || {});
+    if (cats.length === 1) {
+      _transferCatState.category = cats[0];
+      const subs = hier['Transfer'][cats[0]] || [];
+      if (subs.length === 1) { _transferCatState.subCategory = subs[0]; finishCatWizard(); return; }
+      _catStep = 'subCategory';
+    } else {
+      _catStep = 'category';
+    }
   } else {
     _catStep = 'simplified';
   }

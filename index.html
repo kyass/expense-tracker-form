@@ -1394,7 +1394,7 @@ function openCatWizard(context, splitIndex) {
     _splitWizardIndex = splitIndex;
     _catStep = 'simplified';
   } else if (_catWizardContext === 'transfer') {
-    _transferCatState.simplified = 'Hide from Budgets & Trends';
+    _transferCatState.simplified = 'Transfer';
     _transferCatState.category = '';
     _transferCatState.subCategory = '';
     _catStep = 'category';
@@ -1543,7 +1543,7 @@ function updateTransferCatDisplay() {
 }
 
 function resetTransferCatState() {
-  _transferCatState.simplified = 'Hide from Budgets & Trends';
+  _transferCatState.simplified = 'Transfer';
   _transferCatState.category = '';
   _transferCatState.subCategory = '';
   updateTransferCatDisplay();
@@ -1585,13 +1585,13 @@ async function saveTransfer() {
 
   const baseEntry = {
     date:          document.getElementById('t-date').value,
-    type:          'Hide from Budgets & Trends',
+    type:          _transferCatState.simplified,
     description:   desc,
     amountCAD:     parseFloat(amtCAD) || 0,
     amountLocal:   parseFloat(amtLocal) || 0,
     catSubcat:     cat && sub ? `${cat}  (${sub})` : cat,
     notes:         document.getElementById('t-notes').value.trim(),
-    simplifiedCat: 'Hide from Budgets & Trends',
+    simplifiedCat: _transferCatState.simplified,
     category:      cat,
     subCategory:   sub,
     transferGroupId,
